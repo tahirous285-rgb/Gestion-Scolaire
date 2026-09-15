@@ -1,0 +1,594 @@
+/* =========================================================
+   PARENTS — STYLES DU MODULE
+   ========================================================= */
+
+/* =========================================================
+   CONTENEUR PRINCIPAL
+   ========================================================= */
+
+.page-container {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 28px;
+}
+
+/* =========================================================
+   EN-TÊTE DE PAGE
+   ========================================================= */
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 28px;
+}
+
+.page-header h1 {
+  margin: 0 0 6px;
+  font-size: 30px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.page-header p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+/* =========================================================
+   BOUTON PRINCIPAL
+   ========================================================= */
+
+.primary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  border: none;
+  border-radius: 8px;
+
+  padding: 11px 17px;
+
+  background: #2563eb;
+  color: #ffffff;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    transform 0.15s ease,
+    box-shadow 0.2s ease;
+}
+
+.primary-button:hover {
+  background: #1d4ed8;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+}
+
+.primary-button:active {
+  transform: translateY(1px);
+}
+
+/* =========================================================
+   STATISTIQUES
+   ========================================================= */
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+
+  min-height: 90px;
+
+  padding: 18px;
+
+  background: #ffffff;
+
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+
+  box-sizing: border-box;
+
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.07);
+}
+
+/* =========================================================
+   ICÔNE STATISTIQUE
+   ========================================================= */
+
+.stat-icon {
+  width: 46px;
+  height: 46px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 10px;
+
+  background: #eff6ff;
+  color: #2563eb;
+
+  flex-shrink: 0;
+}
+
+.stat-card span {
+  display: block;
+
+  margin-bottom: 4px;
+
+  color: #6b7280;
+
+  font-size: 13px;
+}
+
+.stat-card strong {
+  display: block;
+
+  color: #111827;
+
+  font-size: 25px;
+  font-weight: 700;
+}
+
+/* =========================================================
+   CARTE DU CONTENU
+   ========================================================= */
+
+.content-card {
+  width: 100%;
+
+  background: #ffffff;
+
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+
+  overflow: visible;
+
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+/* =========================================================
+   BARRE D'OUTILS
+   ========================================================= */
+
+.table-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 15px;
+
+  padding: 18px;
+
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* =========================================================
+   RECHERCHE
+   ========================================================= */
+
+.search-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  width: 100%;
+  max-width: 550px;
+
+  padding: 10px 13px;
+
+  background: #f9fafb;
+
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+
+  box-sizing: border-box;
+
+  color: #6b7280;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+}
+
+.search-box:focus-within {
+  background: #ffffff;
+
+  border-color: #2563eb;
+
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.search-box svg {
+  flex-shrink: 0;
+}
+
+.search-box input {
+  width: 100%;
+
+  border: none;
+  outline: none;
+
+  background: transparent;
+
+  color: #111827;
+
+  font-size: 14px;
+
+  font-family: inherit;
+}
+
+.search-box input::placeholder {
+  color: #9ca3af;
+}
+
+/* =========================================================
+   CONTENEUR DU TABLEAU
+   ========================================================= */
+
+.table-container {
+  width: 100%;
+
+  overflow-x: auto;
+}
+
+/* =========================================================
+   TABLEAU
+   ========================================================= */
+
+table {
+  width: 100%;
+
+  border-collapse: collapse;
+
+  min-width: 900px;
+}
+
+thead {
+  background: #f9fafb;
+}
+
+thead tr {
+  border-bottom: 1px solid #e5e7eb;
+}
+
+th {
+  padding: 14px 18px;
+
+  text-align: left;
+
+  color: #6b7280;
+
+  font-size: 12px;
+  font-weight: 700;
+
+  text-transform: uppercase;
+
+  letter-spacing: 0.4px;
+
+  white-space: nowrap;
+}
+
+td {
+  padding: 15px 18px;
+
+  border-bottom: 1px solid #f1f5f9;
+
+  color: #374151;
+
+  font-size: 14px;
+
+  white-space: nowrap;
+}
+
+tbody tr {
+  transition: background 0.15s ease;
+}
+
+tbody tr:hover {
+  background: #f8fafc;
+}
+
+tbody tr:last-child td {
+  border-bottom: none;
+}
+
+td strong {
+  color: #111827;
+
+  font-weight: 600;
+}
+
+/* =========================================================
+   BADGE STATUT / NOMBRE D'ÉLÈVES
+   ========================================================= */
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  min-width: 28px;
+
+  padding: 5px 9px;
+
+  border-radius: 999px;
+
+  font-size: 12px;
+  font-weight: 600;
+
+  box-sizing: border-box;
+}
+
+.status-badge.active {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.status-badge.inactive {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+/* =========================================================
+   CELLULE DES ACTIONS
+   ========================================================= */
+
+.actions-cell {
+  position: relative;
+
+  width: 70px;
+
+  text-align: center;
+}
+
+/* =========================================================
+   BOUTON ⋮
+   ========================================================= */
+
+.action-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 34px;
+  height: 34px;
+
+  padding: 0;
+
+  border: 1px solid transparent;
+  border-radius: 7px;
+
+  background: transparent;
+
+  color: #6b7280;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.action-button:hover {
+  background: #f3f4f6;
+
+  border-color: #e5e7eb;
+
+  color: #111827;
+}
+
+/* =========================================================
+   MENU D'ACTIONS
+   ========================================================= */
+
+.action-menu {
+  position: absolute;
+
+  top: 44px;
+  right: 10px;
+
+  z-index: 100;
+
+  width: 190px;
+
+  padding: 6px;
+
+  background: #ffffff;
+
+  border: 1px solid #e5e7eb;
+  border-radius: 9px;
+
+  box-shadow:
+    0 10px 25px rgba(0, 0, 0, 0.1),
+    0 4px 10px rgba(0, 0, 0, 0.05);
+
+  animation: actionMenuAppear 0.15s ease;
+}
+
+@keyframes actionMenuAppear {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.action-menu button {
+  display: flex;
+  align-items: center;
+
+  width: 100%;
+
+  padding: 10px 12px;
+
+  border: none;
+  border-radius: 6px;
+
+  background: transparent;
+
+  color: #374151;
+
+  font-size: 13px;
+
+  text-align: left;
+
+  cursor: pointer;
+
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.action-menu button:hover {
+  background: #f3f4f6;
+
+  color: #111827;
+}
+
+/* =========================================================
+   ACTION SUPPRESSION
+   ========================================================= */
+
+.action-menu .danger-action {
+  color: #dc2626;
+}
+
+.action-menu .danger-action:hover {
+  background: #fef2f2;
+
+  color: #b91c1c;
+}
+
+/* =========================================================
+   MESSAGE AUCUN RÉSULTAT
+   ========================================================= */
+
+table td[colspan] {
+  color: #6b7280;
+
+  font-size: 14px;
+}
+
+/* =========================================================
+   RESPONSIVE — TABLETTE
+   ========================================================= */
+
+@media (max-width: 1024px) {
+
+  .page-container {
+    padding: 22px;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .page-header h1 {
+    font-size: 27px;
+  }
+}
+
+/* =========================================================
+   RESPONSIVE — MOBILE
+   ========================================================= */
+
+@media (max-width: 768px) {
+
+  .page-container {
+    padding: 16px;
+  }
+
+  .page-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .primary-button {
+    width: 100%;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .table-toolbar {
+    padding: 14px;
+  }
+
+  .search-box {
+    max-width: none;
+  }
+
+  .content-card {
+    border-radius: 9px;
+  }
+
+  th,
+  td {
+    padding: 12px 14px;
+  }
+}
+
+/* =========================================================
+   PETITS ÉCRANS
+   ========================================================= */
+
+@media (max-width: 480px) {
+
+  .page-container {
+    padding: 12px;
+  }
+
+  .page-header h1 {
+    font-size: 24px;
+  }
+
+  .page-header p {
+    font-size: 13px;
+  }
+
+  .stat-card {
+    min-height: 78px;
+
+    padding: 14px;
+  }
+
+  .stat-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .stat-card strong {
+    font-size: 22px;
+  }
+}
