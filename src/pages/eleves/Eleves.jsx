@@ -135,14 +135,6 @@ function Eleves() {
   ).length;
 
   // =========================================
-  // FERMER LE MENU
-  // =========================================
-
-  const fermerMenu = () => {
-    setSelectedEleve(null);
-  };
-
-  // =========================================
   // CONSULTER
   // =========================================
 
@@ -204,27 +196,6 @@ function Eleves() {
 
     setSelectedEleve(null);
   };
-const [eleveAChangerStatut, setEleveAChangerStatut] = useState(null);
-const demanderChangementStatut = (eleve) => {
-  setEleveAChangerStatut(eleve);
-  setSelectedEleve(null);
-};
-const confirmerChangementStatut = () => {
-  if (!eleveAChangerStatut) return;
-
-  setEleves((anciensEleves) =>
-    anciensEleves.map((eleve) =>
-      eleve.id_eleve === eleveAChangerStatut.id_eleve
-        ? {
-            ...eleve,
-            actif: !eleve.actif,
-          }
-        : eleve
-    )
-  );
-
-  setEleveAChangerStatut(null);
-};
 
   // =========================================
   // DEMANDER SUPPRESSION
