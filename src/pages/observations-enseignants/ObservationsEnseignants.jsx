@@ -1,10 +1,1 @@
-function ObservationsEnseignants() {
-  return (
-    <div className="page-container">
-      <h1>Observations enseignants</h1>
-      <p>Module en cours de développement.</p>
-    </div>
-  );
-}
-
-export default ObservationsEnseignants;
+export default function ObservationsEnseignants(){return <div style={{padding:24}}><h1>🗒️ Observations enseignants</h1><p>Le schéma existe côté backend, mais aucune route API n'est actuellement exposée dans <code>app/api/v1/api.py</code>. Ce module doit rester non connecté jusqu'à ajout de l'endpoint.</p></div>}

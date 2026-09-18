@@ -1,10 +1,2 @@
-function PaiementsHonoraires() {
-  return (
-    <div className="page-container">
-      <h1>Paiements honoraires</h1>
-      <p>Module en cours de développement.</p>
-    </div>
-  );
-}
-
-export default PaiementsHonoraires;
+import React,{useEffect,useState} from "react"; import CrudPage from "../../components/common/CrudPage"; import {getHonoraires,getPaiementsHonoraire,createPaiementHonoraire} from "../../services/honorairesApi";
+export default function PaiementsHonoraires(){const [hs,setHs]=useState([]),[selected,setSelected]=useState(""); const [tick,setTick]=useState(0); useEffect(()=>{getHonoraires({}).then(setHs).catch(()=>{})},[]); const load=()=>selected?getPaiementsHonoraire(selected):Promise.resolve([]); const fields=[{name:"id_honoraire",label:"Honoraire",type:"select",required:true,options:hs.map(x=>({value:x.id_honoraire,label:`#${x.id_honoraire} — enseignant ${x.id_enseignant}`}))},{name:"reference",label:"Référence",required:true},{name:"date_paiement",label:"Date et heure",type:"datetime-local",required:true},{name:"montant",label:"Montant",type:"number",step:"0.01",min:"0",required:true},{name:"mode_paiement",label:"Mode de paiement"},{name:"commentaire",label:"Commentaire",type:"textarea",full:true}]; return <div><div style={{padding:"24px 24px 0"}}><label style={{fontWeight:600}}>Honoraire à consulter : </label><select value={selected} onChange={e=>{setSelected(e.target.value);setTick(t=>t+1)}}><option value="">Sélectionner...</option>{hs.map(h=><option key={h.id_honoraire} value={h.id_honoraire}>#{h.id_honoraire} — enseignant {h.id_enseignant} — solde {h.solde}</option>)}</select></div><CrudPage key={tick} title="Paiements honoraires" subtitle="Paiements effectués sur les honoraires" icon="💳" load={load} create={createPaiementHonoraire} canUpdate={false} canDelete={false} rowKey="id_paiement_honoraire" initialForm={{id_honoraire:selected,reference:"",date_paiement:new Date().toISOString().slice(0,16),montant:"",mode_paiement:"",commentaire:""}} fields={fields} searchKeys={["reference","mode_paiement","statut"]} columns={[{key:"id_paiement_honoraire",label:"ID"},{key:"reference",label:"Référence"},{key:"date_paiement",label:"Date"},{key:"montant",label:"Montant"},{key:"mode_paiement",label:"Mode"},{key:"statut",label:"Statut"}]}/></div> }

@@ -1,72 +1,66 @@
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 
-function EleveForm({
-  eleveInitial = null,
+function ParentForm({
+  parentInitial = null,
   onClose,
   onSave,
   loading = false,
 }) {
+  // =====================================================
+  // ÉTAT DU FORMULAIRE
+  // =====================================================
+
   const [formData, setFormData] = useState({
-    matricule: "",
     nom: "",
     prenom: "",
-    sexe: "",
-    date_naissance: "",
-    lieu_naissance: "",
-    nationalite: "",
-    adresse: "",
     telephone: "",
+    telephone_secondaire: "",
     email: "",
-    photo: "",
-    actif: true,
+    adresse: "",
+    profession: "",
   });
 
   const [errors, setErrors] = useState({});
 
+  // =====================================================
+  // INITIALISATION EN MODE MODIFICATION
+  // =====================================================
+
   useEffect(() => {
-    if (eleveInitial) {
+    if (parentInitial) {
       setFormData({
-        matricule: eleveInitial.matricule || "",
-        nom: eleveInitial.nom || "",
-        prenom: eleveInitial.prenom || "",
-        sexe: eleveInitial.sexe || "",
-        date_naissance:
-          eleveInitial.date_naissance || "",
-        lieu_naissance:
-          eleveInitial.lieu_naissance || "",
-        nationalite:
-          eleveInitial.nationalite || "",
-        adresse:
-          eleveInitial.adresse || "",
+        nom: parentInitial.nom || "",
+        prenom: parentInitial.prenom || "",
         telephone:
-          eleveInitial.telephone || "",
+          parentInitial.telephone || "",
+        telephone_secondaire:
+          parentInitial.telephone_secondaire || "",
         email:
-          eleveInitial.email || "",
-        photo:
-          eleveInitial.photo || "",
-        actif:
-          eleveInitial.actif ?? true,
+          parentInitial.email || "",
+        adresse:
+          parentInitial.adresse || "",
+        profession:
+          parentInitial.profession || "",
       });
     } else {
       setFormData({
-        matricule: "",
         nom: "",
         prenom: "",
-        sexe: "",
-        date_naissance: "",
-        lieu_naissance: "",
-        nationalite: "",
-        adresse: "",
         telephone: "",
+        telephone_secondaire: "",
         email: "",
-        photo: "",
-        actif: true,
+        adresse: "",
+        profession: "",
       });
     }
 
     setErrors({});
-  }, [eleveInitial]);
+  }, [parentInitial]);
+
+  // =====================================================
+  // CHANGEMENT D'UN CHAMP
+  // =====================================================
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -76,6 +70,8 @@ function EleveForm({
       [name]: value,
     }));
 
+    // Supprimer l'erreur du champ dès que l'utilisateur
+    // recommence à saisir
     if (errors[name]) {
       setErrors((ancien) => ({
         ...ancien,
@@ -84,13 +80,12 @@ function EleveForm({
     }
   };
 
+  // =====================================================
+  // VALIDATION
+  // =====================================================
+
   const validateForm = () => {
     const nouvellesErreurs = {};
-
-    if (!formData.matricule.trim()) {
-      nouvellesErreurs.matricule =
-        "Le matricule est obligatoire.";
-    }
 
     if (!formData.nom.trim()) {
       nouvellesErreurs.nom =
@@ -109,7 +104,7 @@ function EleveForm({
       )
     ) {
       nouvellesErreurs.email =
-        "L'adresse e-mail est invalide.";
+        "Veuillez saisir une adresse e-mail valide.";
     }
 
     setErrors(nouvellesErreurs);
@@ -119,6 +114,10 @@ function EleveForm({
     );
   };
 
+  // =====================================================
+  // SOUMISSION
+  // =====================================================
+
   const handleSubmit = (event) => {
     event.preventDefault();
 
@@ -127,29 +126,27 @@ function EleveForm({
     }
 
     const donnees = {
-      matricule: formData.matricule.trim(),
       nom: formData.nom.trim(),
       prenom: formData.prenom.trim(),
-      sexe: formData.sexe || null,
-      date_naissance:
-        formData.date_naissance || null,
-      lieu_naissance:
-        formData.lieu_naissance.trim() || null,
-      nationalite:
-        formData.nationalite.trim() || null,
-      adresse:
-        formData.adresse.trim() || null,
       telephone:
         formData.telephone.trim() || null,
+      telephone_secondaire:
+        formData.telephone_secondaire.trim() ||
+        null,
       email:
         formData.email.trim() || null,
-      photo:
-        formData.photo.trim() || null,
-      actif: formData.actif,
+      adresse:
+        formData.adresse.trim() || null,
+      profession:
+        formData.profession.trim() || null,
     };
 
     onSave(donnees);
   };
+
+  // =====================================================
+  // AFFICHAGE
+  // =====================================================
 
   return (
     <div
@@ -166,17 +163,22 @@ function EleveForm({
           event.stopPropagation()
         }
       >
+        {/* ============================================
+            EN-TÊTE
+            ============================================ */}
+
         <div className="modal-header">
           <div>
             <h2>
-              {eleveInitial
-                ? "Modifier l'élève"
-                : "Ajouter un élève"}
+              {parentInitial
+                ? "Modifier le parent"
+                : "Ajouter un parent"}
             </h2>
 
             <p>
-              Informations personnelles de
-              l'élève.
+              {parentInitial
+                ? "Modifiez les informations du parent."
+                : "Renseignez les informations du parent."}
             </p>
           </div>
 
@@ -185,49 +187,40 @@ function EleveForm({
             className="modal-close"
             onClick={onClose}
             disabled={loading}
+            title="Fermer"
           >
             <X size={20} />
           </button>
         </div>
 
+        {/* ============================================
+            FORMULAIRE
+            ============================================ */}
+
         <form
-          className="student-form"
+          className="parent-form"
           onSubmit={handleSubmit}
+          noValidate
         >
           <div className="form-grid">
+            {/* NOM */}
 
             <div className="form-group">
-              <label htmlFor="matricule">
-                Matricule *
-              </label>
-
-              <input
-                id="matricule"
-                name="matricule"
-                value={formData.matricule}
-                onChange={handleChange}
-                disabled={loading}
-                placeholder="Ex. ELV001"
-              />
-
-              {errors.matricule && (
-                <small className="field-error">
-                  {errors.matricule}
-                </small>
-              )}
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="nom">
+              <label htmlFor="parent-nom">
                 Nom *
               </label>
 
               <input
-                id="nom"
+                id="parent-nom"
                 name="nom"
+                type="text"
+                placeholder="Ex. TRAORÉ"
                 value={formData.nom}
                 onChange={handleChange}
                 disabled={loading}
+                className={
+                  errors.nom ? "input-error" : ""
+                }
               />
 
               {errors.nom && (
@@ -237,17 +230,26 @@ function EleveForm({
               )}
             </div>
 
+            {/* PRÉNOM */}
+
             <div className="form-group">
-              <label htmlFor="prenom">
+              <label htmlFor="parent-prenom">
                 Prénom *
               </label>
 
               <input
-                id="prenom"
+                id="parent-prenom"
                 name="prenom"
+                type="text"
+                placeholder="Ex. Amadou"
                 value={formData.prenom}
                 onChange={handleChange}
                 disabled={loading}
+                className={
+                  errors.prenom
+                    ? "input-error"
+                    : ""
+                }
               />
 
               {errors.prenom && (
@@ -257,106 +259,64 @@ function EleveForm({
               )}
             </div>
 
-            <div className="form-group">
-              <label htmlFor="sexe">
-                Sexe
-              </label>
-
-              <select
-                id="sexe"
-                name="sexe"
-                value={formData.sexe}
-                onChange={handleChange}
-                disabled={loading}
-              >
-                <option value="">
-                  Sélectionner
-                </option>
-
-                <option value="M">
-                  Masculin
-                </option>
-
-                <option value="F">
-                  Féminin
-                </option>
-              </select>
-            </div>
+            {/* TÉLÉPHONE */}
 
             <div className="form-group">
-              <label htmlFor="date_naissance">
-                Date de naissance
-              </label>
-
-              <input
-                id="date_naissance"
-                name="date_naissance"
-                type="date"
-                value={
-                  formData.date_naissance
-                }
-                onChange={handleChange}
-                disabled={loading}
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="lieu_naissance">
-                Lieu de naissance
-              </label>
-
-              <input
-                id="lieu_naissance"
-                name="lieu_naissance"
-                value={
-                  formData.lieu_naissance
-                }
-                onChange={handleChange}
-                disabled={loading}
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="nationalite">
-                Nationalité
-              </label>
-
-              <input
-                id="nationalite"
-                name="nationalite"
-                value={formData.nationalite}
-                onChange={handleChange}
-                disabled={loading}
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="telephone">
+              <label htmlFor="parent-telephone">
                 Téléphone
               </label>
 
               <input
-                id="telephone"
+                id="parent-telephone"
                 name="telephone"
                 type="tel"
+                placeholder="Ex. 70 00 00 00"
                 value={formData.telephone}
                 onChange={handleChange}
                 disabled={loading}
               />
             </div>
 
+            {/* TÉLÉPHONE SECONDAIRE */}
+
             <div className="form-group">
-              <label htmlFor="email">
+              <label htmlFor="parent-telephone-secondaire">
+                Téléphone secondaire
+              </label>
+
+              <input
+                id="parent-telephone-secondaire"
+                name="telephone_secondaire"
+                type="tel"
+                placeholder="Ex. 76 00 00 00"
+                value={
+                  formData.telephone_secondaire
+                }
+                onChange={handleChange}
+                disabled={loading}
+              />
+            </div>
+
+            {/* EMAIL */}
+
+            <div className="form-group">
+              <label htmlFor="parent-email">
                 E-mail
               </label>
 
               <input
-                id="email"
+                id="parent-email"
                 name="email"
                 type="email"
+                placeholder="Ex. parent@email.com"
                 value={formData.email}
                 onChange={handleChange}
                 disabled={loading}
+                className={
+                  errors.email
+                    ? "input-error"
+                    : ""
+                }
               />
 
               {errors.email && (
@@ -366,41 +326,48 @@ function EleveForm({
               )}
             </div>
 
+            {/* PROFESSION */}
+
             <div className="form-group">
-              <label htmlFor="photo">
-                Photo
+              <label htmlFor="parent-profession">
+                Profession
               </label>
 
               <input
-                id="photo"
-                name="photo"
+                id="parent-profession"
+                name="profession"
                 type="text"
-                value={formData.photo}
+                placeholder="Ex. Enseignant"
+                value={formData.profession}
                 onChange={handleChange}
                 disabled={loading}
-                placeholder="URL ou chemin de la photo"
               />
             </div>
 
+            {/* ADRESSE */}
+
             <div className="form-group full-width">
-              <label htmlFor="adresse">
+              <label htmlFor="parent-adresse">
                 Adresse
               </label>
 
               <textarea
-                id="adresse"
+                id="parent-adresse"
                 name="adresse"
-                rows="3"
+                rows="4"
+                placeholder="Adresse complète du parent..."
                 value={formData.adresse}
                 onChange={handleChange}
                 disabled={loading}
               />
             </div>
-
           </div>
 
-          <div className="form-actions">
+          {/* ==========================================
+              ACTIONS
+              ========================================== */}
 
+          <div className="form-actions">
             <button
               type="button"
               className="secondary-button"
@@ -417,11 +384,10 @@ function EleveForm({
             >
               {loading
                 ? "Enregistrement..."
-                : eleveInitial
+                : parentInitial
                 ? "Enregistrer les modifications"
-                : "Ajouter l'élève"}
+                : "Ajouter le parent"}
             </button>
-
           </div>
         </form>
       </div>
@@ -429,4 +395,4 @@ function EleveForm({
   );
 }
 
-export default EleveForm;
+export default ParentForm;

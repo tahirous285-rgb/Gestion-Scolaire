@@ -1,10 +1,2 @@
-﻿function Honoraires() {
-  return (
-    <div className="page-container">
-      <h1>Honoraires</h1>
-      <p>Module en cours de développement.</p>
-    </div>
-  );
-}
-
-export default Honoraires;
+import React,{useEffect,useState} from "react"; import CrudPage from "../../components/common/CrudPage"; import {getHonoraires,createHonoraire,updateHonoraire,getMois} from "../../services/honorairesApi"; import {getEnseignants} from "../../services/enseignantsApi"; import {getAnnees} from "../../services/anneesApi";
+export default function Honoraires(){const [o,setO]=useState({e:[],a:[],m:[]}); useEffect(()=>{Promise.all([getEnseignants(),getAnnees(),getMois()]).then(([e,a,m])=>setO({e,a,m})).catch(()=>{})},[]); const fields=[{name:"id_enseignant",label:"Enseignant",type:"select",required:true,options:o.e.map(x=>({value:x.id_enseignant,label:`${x.nom} ${x.prenom}`}))},{name:"id_annee",label:"Année",type:"select",required:true,options:o.a.map(x=>({value:x.id_annee,label:x.libelle}))},{name:"id_mois",label:"Mois",type:"select",required:true,options:o.m.map(x=>({value:x.id_mois,label:x.libelle}))},{name:"heures_prevues",label:"Heures prévues",type:"number",step:"0.01",min:"0"},{name:"heures_effectuees",label:"Heures effectuées",type:"number",step:"0.01",min:"0"},{name:"taux_horaire",label:"Taux horaire",type:"number",step:"0.01",min:"0",required:true},{name:"retenues",label:"Retenues",type:"number",step:"0.01",min:"0"}]; return <CrudPage title="Honoraires" subtitle="Calcul et suivi des honoraires enseignants" icon="💰" load={()=>getHonoraires({})} create={createHonoraire} update={updateHonoraire} canDelete={false} rowKey="id_honoraire" initialForm={{id_enseignant:"",id_annee:"",id_mois:"",heures_prevues:"",heures_effectuees:"",taux_horaire:"",retenues:0}} fields={fields} searchKeys={["id_enseignant","id_annee","id_mois","statut"]} columns={[{key:"id_honoraire",label:"ID"},{key:"id_enseignant",label:"Enseignant"},{key:"id_mois",label:"Mois"},{key:"heures_effectuees",label:"H. effectuées"},{key:"taux_horaire",label:"Taux"},{key:"montant_brut",label:"Brut"},{key:"montant_net",label:"Net"},{key:"solde",label:"Solde"},{key:"statut",label:"Statut"}]}/> }

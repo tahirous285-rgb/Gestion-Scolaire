@@ -1,10 +1,1 @@
-﻿function JournalActivite() {
-  return (
-    <div className="page-container">
-      <h1>JournalActivite</h1>
-      <p>Module en cours de développement.</p>
-    </div>
-  );
-}
-
-export default JournalActivite;
+export default function JournalActivite(){return <div style={{padding:24}}><h1>🧾 Journal d'activité</h1><p>Aucune route API de journal d'activité n'est actuellement exposée par le backend. L'écran peut rester présent, mais sa connexion réelle nécessite un endpoint backend.</p></div>}

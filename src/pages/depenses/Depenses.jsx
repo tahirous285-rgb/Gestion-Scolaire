@@ -1,10 +1,2 @@
-﻿function Depenses() {
-  return (
-    <div className="page-container">
-      <h1>Depenses</h1>
-      <p>Module en cours de développement.</p>
-    </div>
-  );
-}
-
-export default Depenses;
+import React from "react"; import CrudPage from "../../components/common/CrudPage"; import {getDepenses,createDepense} from "../../services/financeApi"; import {establishmentId,userId} from "../../services/apiClient";
+export default function Depenses(){const fields=[{name:"date_depense",label:"Date",type:"date",required:true},{name:"categorie",label:"Catégorie"},{name:"libelle",label:"Libellé",required:true},{name:"montant",label:"Montant",type:"number",step:"0.01",min:"0",required:true},{name:"fournisseur",label:"Fournisseur"},{name:"reference_piece",label:"Référence pièce"},{name:"mode_paiement",label:"Mode de paiement"},{name:"justificatif",label:"Justificatif"},{name:"observation",label:"Observation",type:"textarea",full:true}]; return <CrudPage title="Dépenses" subtitle="Suivi des dépenses de l'établissement" icon="🧮" load={()=>getDepenses(establishmentId())} create={d=>createDepense({id_etablissement:establishmentId(),id_utilisateur:userId(),...d,montant:Number(d.montant)})} canUpdate={false} canDelete={false} rowKey="id_depense" initialForm={{date_depense:new Date().toISOString().slice(0,10),categorie:"",libelle:"",montant:"",fournisseur:"",reference_piece:"",mode_paiement:"",justificatif:"",observation:""}} fields={fields} searchKeys={["categorie","libelle","fournisseur","reference_piece"]} columns={[{key:"id_depense",label:"ID"},{key:"date_depense",label:"Date"},{key:"categorie",label:"Catégorie"},{key:"libelle",label:"Libellé"},{key:"montant",label:"Montant"},{key:"fournisseur",label:"Fournisseur"},{key:"mode_paiement",label:"Mode"}]}/> }

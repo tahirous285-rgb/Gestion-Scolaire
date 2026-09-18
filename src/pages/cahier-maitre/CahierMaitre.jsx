@@ -1,10 +1,2 @@
-﻿function CahierMaitre() {
-  return (
-    <div className="page-container">
-      <h1>CahierMaitre</h1>
-      <p>Module en cours de développement.</p>
-    </div>
-  );
-}
-
-export default CahierMaitre;
+import React,{useEffect,useState} from "react"; import CrudPage from "../../components/common/CrudPage"; import {getPresencesEnseignants,createPresenceEnseignant,updatePresenceEnseignant} from "../../services/cahierMaitreApi"; import {getEnseignants} from "../../services/enseignantsApi"; import {getAnnees} from "../../services/anneesApi";
+export default function CahierMaitre(){const [o,setO]=useState({e:[],a:[]}); useEffect(()=>{Promise.all([getEnseignants(),getAnnees()]).then(([e,a])=>setO({e,a})).catch(()=>{})},[]); const fields=[{name:"id_enseignant",label:"Enseignant",type:"select",required:true,options:o.e.map(x=>({value:x.id_enseignant,label:`${x.nom} ${x.prenom}`}))},{name:"id_annee",label:"Année",type:"select",required:true,options:o.a.map(x=>({value:x.id_annee,label:x.libelle}))},{name:"date_presence",label:"Date",type:"date",required:true},{name:"heure_arrivee",label:"Heure arrivée",type:"time"},{name:"heure_depart",label:"Heure départ",type:"time"},{name:"statut",label:"Statut",required:true,type:"select",options:["PRESENT","ABSENT","RETARD","PERMISSION","MISSION","CONGE","AUTRE"].map(x=>({value:x,label:x}))},{name:"motif",label:"Motif"},{name:"justification",label:"Justification",type:"textarea",full:true},{name:"justificatif",label:"Justificatif"},{name:"validee",label:"Validée",type:"checkbox"},{name:"id_validateur",label:"ID validateur",type:"number"},{name:"observation",label:"Observation",type:"textarea",full:true}]; return <CrudPage title="Cahier des maîtres" subtitle="Présence et suivi des enseignants" icon="📘" load={()=>getPresencesEnseignants()} create={createPresenceEnseignant} update={updatePresenceEnseignant} canDelete={false} rowKey="id_presence" initialForm={{id_enseignant:"",id_annee:"",date_presence:new Date().toISOString().slice(0,10),heure_arrivee:"",heure_depart:"",statut:"PRESENT",motif:"",justification:"",justificatif:"",validee:false,id_validateur:"",observation:""}} fields={fields} searchKeys={["date_presence","statut","id_enseignant"]} columns={[{key:"id_presence",label:"ID"},{key:"id_enseignant",label:"Enseignant"},{key:"date_presence",label:"Date"},{key:"heure_arrivee",label:"Arrivée"},{key:"heure_depart",label:"Départ"},{key:"statut",label:"Statut"},{key:"validee",label:"Validée",render:r=>r.validee?"Oui":"Non"}]}/> }

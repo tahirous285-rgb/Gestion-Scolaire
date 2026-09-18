@@ -1,10 +1,2 @@
-﻿function FraisScolaires() {
-  return (
-    <div className="page-container">
-      <h1>FraisScolaires</h1>
-      <p>Module en cours de développement.</p>
-    </div>
-  );
-}
-
-export default FraisScolaires;
+import React,{useEffect,useState} from "react"; import CrudPage from "../../components/common/CrudPage"; import {getFrais,createFrais,getTypesFrais,createTypeFrais} from "../../services/financeApi"; import {getInscriptions} from "../../services/inscriptionsApi"; import {getAnnees} from "../../services/anneesApi"; import {establishmentId} from "../../services/apiClient";
+export default function FraisScolaires(){const [o,setO]=useState({i:[],a:[],t:[]}); useEffect(()=>{Promise.all([getInscriptions(),getAnnees(),getTypesFrais(establishmentId())]).then(([i,a,t])=>setO({i,a,t})).catch(()=>{})},[]); const fields=[{name:"id_annee",label:"Année",type:"select",required:true,options:o.a.map(x=>({value:x.id_annee,label:x.libelle}))},{name:"id_inscription",label:"Inscription",type:"select",required:true,options:o.i.map(x=>({value:x.id_inscription,label:`#${x.id_inscription} — classe ${x.id_classe}`}))},{name:"id_type_frais",label:"Type de frais",type:"select",required:true,options:o.t.map(x=>({value:x.id_type_frais,label:`${x.code} — ${x.libelle}`}))},{name:"montant_du",label:"Montant dû",type:"number",step:"0.01",min:"0",required:true},{name:"date_echeance",label:"Échéance",type:"date"},{name:"obligatoire",label:"Obligatoire",type:"checkbox"},{name:"description",label:"Description",type:"textarea",full:true}]; return <CrudPage title="Frais scolaires" subtitle="Gestion des frais dus par les élèves" icon="💵" load={()=>getFrais({})} create={createFrais} canUpdate={false} canDelete={false} rowKey="id_frais" initialForm={{id_annee:"",id_inscription:"",id_type_frais:"",montant_du:"",date_echeance:"",obligatoire:true,description:""}} fields={fields} searchKeys={["id_inscription","id_type_frais","montant_du"]} columns={[{key:"id_frais",label:"ID"},{key:"id_inscription",label:"Inscription"},{key:"id_type_frais",label:"Type"},{key:"montant_du",label:"Montant dû"},{key:"date_echeance",label:"Échéance"},{key:"obligatoire",label:"Obligatoire",render:r=>r.obligatoire?"Oui":"Non"}]}/>} 

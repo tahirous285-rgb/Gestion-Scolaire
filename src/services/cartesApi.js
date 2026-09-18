@@ -1,0 +1,1 @@
+import { apiGet, apiPost, apiPut } from "./apiClient"; export const getCartes=id=>apiGet(`/cartes-scolaires/${id?`?id_inscription=${id}`:""}`); export const createCarte=d=>apiPost("/cartes-scolaires/",d); export const reimprimerCarte=id=>apiPut(`/cartes-scolaires/${id}/reimprimer`,{});

@@ -1,10 +1,2 @@
-﻿function Recus() {
-  return (
-    <div className="page-container">
-      <h1>Recus</h1>
-      <p>Module en cours de développement.</p>
-    </div>
-  );
-}
-
-export default Recus;
+import React,{useEffect,useState} from "react"; import {getPaiements,getRecuByPaiement,printRecu} from "../../services/financeApi"; import {userId} from "../../services/apiClient";
+export default function Recus(){const [payments,setPayments]=useState([]),[id,setId]=useState(""),[recu,setRecu]=useState(null),[error,setError]=useState(""); useEffect(()=>{getPaiements().then(setPayments).catch(e=>setError(e.message))},[]); async function load(){if(!id)return;try{setError("");setRecu(await getRecuByPaiement(id))}catch(e){setRecu(null);setError(e.message)}} async function print(){if(!recu)return;try{setRecu(await printRecu(recu.id_recu,userId()))}catch(e){setError(e.message)}} return <div className="crud-page"><div className="crud-header"><div><h1>🧾 Reçus</h1><p>Consultation et impression des reçus de paiement.</p></div></div>{error&&<div className="crud-alert"><span>⚠️ {error}</span></div>}<div style={{display:"flex",gap:10,marginBottom:20}}><select value={id} onChange={e=>setId(e.target.value)}><option value="">Choisir un paiement…</option>{payments.map(p=><option key={p.id_paiement} value={p.id_paiement}>{p.reference} — {p.montant}</option>)}</select><button className="crud-primary" onClick={load}>Afficher</button></div>{recu&&<div className="crud-table-card" style={{padding:20}}><h2>{recu.numero_recu}</h2><p>Montant : <strong>{recu.montant}</strong></p><p>Date : {recu.date_emission}</p><p>Imprimé : {recu.imprime?"Oui":"Non"}</p><button className="crud-primary" onClick={print}>🖨️ Marquer comme imprimé</button></div>}</div>}

@@ -1,10 +1,2 @@
-﻿function Paiements() {
-  return (
-    <div className="page-container">
-      <h1>Paiements</h1>
-      <p>Module en cours de développement.</p>
-    </div>
-  );
-}
-
-export default Paiements;
+import React,{useEffect,useState} from "react"; import CrudPage from "../../components/common/CrudPage"; import {getPaiements,createPaiement} from "../../services/financeApi"; import {getInscriptions} from "../../services/inscriptionsApi";
+export default function Paiements(){const [i,setI]=useState([]); useEffect(()=>{getInscriptions().then(setI).catch(()=>{})},[]); const fields=[{name:"id_inscription",label:"Inscription",type:"select",required:true,options:i.map(x=>({value:x.id_inscription,label:`#${x.id_inscription} — classe ${x.id_classe}`}))},{name:"id_frais",label:"ID frais",type:"number"},{name:"reference",label:"Référence",required:true},{name:"date_paiement",label:"Date et heure",type:"datetime-local",required:true},{name:"montant",label:"Montant",type:"number",step:"0.01",min:"0",required:true},{name:"mode_paiement",label:"Mode de paiement"},{name:"commentaire",label:"Commentaire",type:"textarea",full:true}]; return <CrudPage title="Paiements" subtitle="Encaissements liés aux inscriptions" icon="💳" load={()=>getPaiements()} create={createPaiement} canUpdate={false} canDelete={false} rowKey="id_paiement" initialForm={{id_inscription:"",id_frais:"",reference:"",date_paiement:new Date().toISOString().slice(0,16),montant:"",mode_paiement:"",commentaire:""}} fields={fields} searchKeys={["reference","mode_paiement","id_inscription"]} columns={[{key:"id_paiement",label:"ID"},{key:"reference",label:"Référence"},{key:"date_paiement",label:"Date"},{key:"id_inscription",label:"Inscription"},{key:"montant",label:"Montant"},{key:"mode_paiement",label:"Mode"},{key:"statut",label:"Statut"}]}/> }

@@ -1,10 +1,2 @@
-﻿function RolesPermissions() {
-  return (
-    <div className="page-container">
-      <h1>RolesPermissions</h1>
-      <p>Module en cours de développement.</p>
-    </div>
-  );
-}
-
-export default RolesPermissions;
+import React from "react"; import CrudPage from "../../components/common/CrudPage"; import {getRoles,createRole} from "../../services/administrationApi";
+export default function RolesPermissions(){const fields=[{name:"nom",label:"Nom du rôle",required:true},{name:"code",label:"Code",required:true},{name:"description",label:"Description",type:"textarea",full:true}]; return <CrudPage title="Rôles & Permissions" subtitle="Le backend actuel expose les rôles ; les permissions ne sont pas encore exposées par une route API." icon="🔐" load={getRoles} create={createRole} canUpdate={false} canDelete={false} rowKey="id_role" initialForm={{nom:"",code:"",description:""}} fields={fields} searchKeys={["nom","code","description"]} columns={[{key:"id_role",label:"ID"},{key:"nom",label:"Nom"},{key:"code",label:"Code"},{key:"description",label:"Description"}]}/> }

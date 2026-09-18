@@ -1,10 +1,2 @@
-﻿function Bulletins() {
-  return (
-    <div className="page-container">
-      <h1>Bulletins</h1>
-      <p>Module en cours de développement.</p>
-    </div>
-  );
-}
-
-export default Bulletins;
+import React,{useEffect,useState} from "react"; import CrudPage from "../../components/common/CrudPage"; import {getBulletins,createBulletin,updateBulletin} from "../../services/bulletinsApi"; import {getInscriptions} from "../../services/inscriptionsApi";
+export default function Bulletins(){const [ins,setIns]=useState([]); useEffect(()=>{getInscriptions().then(setIns).catch(()=>{})},[]); const fields=[{name:"id_inscription",label:"Inscription",type:"select",required:true,options:ins.map(x=>({value:x.id_inscription,label:`#${x.id_inscription} — classe ${x.id_classe}`}))},{name:"id_periode",label:"ID période",type:"number",required:true},{name:"moyenne_generale",label:"Moyenne générale",type:"number",step:"0.01",min:"0"},{name:"rang",label:"Rang",type:"number",min:"1"},{name:"appreciation",label:"Appréciation",type:"textarea",full:true},{name:"decision",label:"Décision"},{name:"valide",label:"Validé",type:"checkbox"},{name:"id_validateur",label:"ID validateur",type:"number"}]; return <CrudPage title="Bulletins" subtitle="Suivi et validation des bulletins" icon="📄" load={getBulletins} create={createBulletin} update={updateBulletin} canDelete={false} rowKey="id_bulletin" initialForm={{id_inscription:"",id_periode:"",moyenne_generale:"",rang:"",appreciation:"",decision:"",valide:false,id_validateur:""}} fields={fields} searchKeys={["id_inscription","id_periode","decision"]} columns={[{key:"id_bulletin",label:"ID"},{key:"id_inscription",label:"Inscription"},{key:"id_periode",label:"Période"},{key:"moyenne_generale",label:"Moyenne"},{key:"rang",label:"Rang"},{key:"decision",label:"Décision"},{key:"valide",label:"Validé",render:r=>r.valide?"Oui":"Non"}]}/> }

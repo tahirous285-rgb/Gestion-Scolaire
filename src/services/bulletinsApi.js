@@ -1,0 +1,1 @@
+import { apiGet, apiPost, apiPut } from "./apiClient"; export const getBulletins=({id_inscription,id_periode}={})=>apiGet(`/bulletins/?${new URLSearchParams({...(id_inscription?{id_inscription}:{}),...(id_periode?{id_periode}:{})})}`); export const createBulletin=d=>apiPost("/bulletins/",d); export const updateBulletin=(id,d)=>apiPut(`/bulletins/${id}`,d);

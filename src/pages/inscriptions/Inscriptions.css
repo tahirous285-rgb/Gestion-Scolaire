@@ -1,0 +1,82 @@
+.inscriptions-page {
+  width: 100%;
+}
+
+/* =====================================================
+   FORMULAIRE
+   ===================================================== */
+
+.inscription-form {
+  padding: 20px;
+}
+
+.inscription-form .form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px;
+}
+
+.inscription-form .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.inscription-form .form-group.full-width {
+  grid-column: 1 / -1;
+}
+
+.inscription-form label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.inscription-form input,
+.inscription-form select,
+.inscription-form textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 11px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  outline: none;
+  font-family: inherit;
+  font-size: 14px;
+  background: white;
+}
+
+.inscription-form input:focus,
+.inscription-form select:focus,
+.inscription-form textarea:focus {
+  border-color: #2563eb;
+  box-shadow:
+    0 0 0 3px
+    rgba(37, 99, 235, 0.1);
+}
+
+/* =====================================================
+   COLONNE ÉLÈVE
+   ===================================================== */
+
+td small {
+  display: block;
+  margin-top: 3px;
+  color: #6b7280;
+  font-size: 12px;
+}
+
+/* =====================================================
+   RESPONSIVE
+   ===================================================== */
+
+@media (max-width: 800px) {
+  .inscription-form .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .inscription-form
+    .form-group.full-width {
+    grid-column: auto;
+  }
+}

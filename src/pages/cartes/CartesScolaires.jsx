@@ -1,10 +1,2 @@
-﻿function CartesScolaires() {
-  return (
-    <div className="page-container">
-      <h1>CartesScolaires</h1>
-      <p>Module en cours de développement.</p>
-    </div>
-  );
-}
-
-export default CartesScolaires;
+import React,{useEffect,useState} from "react"; import CrudPage from "../../components/common/CrudPage"; import {getCartes,createCarte,reimprimerCarte} from "../../services/cartesApi"; import {getInscriptions} from "../../services/inscriptionsApi"; 
+export default function CartesScolaires(){const [i,setI]=useState([]); useEffect(()=>{getInscriptions().then(setI).catch(()=>{})},[]); const fields=[{name:"id_inscription",label:"Inscription",type:"select",required:true,options:i.map(x=>({value:x.id_inscription,label:`#${x.id_inscription} — classe ${x.id_classe}`}))},{name:"date_expiration",label:"Date expiration",type:"date"},{name:"id_generateur",label:"ID générateur",type:"number"}]; return <CrudPage title="Cartes scolaires" subtitle="Génération et réimpression des cartes" icon="🎫" load={()=>getCartes()} create={createCarte} canUpdate={false} canDelete={false} rowKey="id_carte" initialForm={{id_inscription:"",date_expiration:"",id_generateur:""}} fields={fields} searchKeys={["id_inscription","numero_carte","statut","qr_token"]} extraActions={(row,close)=><button onClick={async()=>{await reimprimerCarte(row.id_carte);close()}}>🖨️ Réimprimer</button>} columns={[{key:"id_carte",label:"ID"},{key:"numero_carte",label:"N° carte"},{key:"id_inscription",label:"Inscription"},{key:"date_generation",label:"Génération"},{key:"date_expiration",label:"Expiration"},{key:"statut",label:"Statut"},{key:"nombre_reeditions",label:"Rééditions"}]}/> }

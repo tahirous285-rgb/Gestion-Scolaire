@@ -1,10 +1,2 @@
-function CoursEffectues() {
-  return (
-    <div className="page-container">
-      <h1>Cours effectués</h1>
-      <p>Module en cours de développement.</p>
-    </div>
-  );
-}
-
-export default CoursEffectues;
+import React,{useEffect,useState} from "react"; import CrudPage from "../../components/common/CrudPage"; import {getCoursEffectues,createCoursEffectue} from "../../services/cahierMaitreApi"; import {getEnseignants} from "../../services/enseignantsApi"; import {getClasses} from "../../services/classesApi"; import {getMatieres} from "../../services/matieresApi"; import {getAnnees} from "../../services/anneesApi";
+export default function CoursEffectues(){const [o,setO]=useState({e:[],c:[],m:[],a:[]}); useEffect(()=>{Promise.all([getEnseignants(),getClasses(),getMatieres(),getAnnees()]).then(([e,c,m,a])=>setO({e,c,m,a})).catch(()=>{})},[]); const fields=[{name:"id_annee",label:"Année",type:"select",required:true,options:o.a.map(x=>({value:x.id_annee,label:x.libelle}))},{name:"id_enseignant",label:"Enseignant",type:"select",required:true,options:o.e.map(x=>({value:x.id_enseignant,label:`${x.nom} ${x.prenom}`}))},{name:"id_classe",label:"Classe",type:"select",required:true,options:o.c.map(x=>({value:x.id_classe,label:x.nom}))},{name:"id_matiere",label:"Matière",type:"select",required:true,options:o.m.map(x=>({value:x.id_matiere,label:`${x.code} — ${x.nom}`}))},{name:"date_cours",label:"Date",type:"date",required:true},{name:"heures_prevues",label:"Heures prévues",type:"number",step:"0.01",min:"0"},{name:"heures_effectuees",label:"Heures effectuées",type:"number",step:"0.01",min:"0"},{name:"statut",label:"Statut"},{name:"observation",label:"Observation",type:"textarea",full:true}]; return <CrudPage title="Cours effectués" subtitle="Suivi des heures réalisées" icon="📚" load={()=>getCoursEffectues({})} create={createCoursEffectue} canUpdate={false} canDelete={false} rowKey="id_cours" initialForm={{id_annee:"",id_enseignant:"",id_classe:"",id_matiere:"",date_cours:new Date().toISOString().slice(0,10),heures_prevues:"",heures_effectuees:"",statut:"effectue",observation:""}} fields={fields} searchKeys={["date_cours","statut","id_enseignant","id_classe"]} columns={[{key:"id_cours",label:"ID"},{key:"date_cours",label:"Date"},{key:"id_enseignant",label:"Enseignant"},{key:"id_classe",label:"Classe"},{key:"id_matiere",label:"Matière"},{key:"heures_effectuees",label:"Heures effectuées"},{key:"statut",label:"Statut"}]}/> }

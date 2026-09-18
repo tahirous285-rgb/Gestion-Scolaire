@@ -1,10 +1,2 @@
-﻿function Etablissements() {
-  return (
-    <div className="page-container">
-      <h1>Etablissements</h1>
-      <p>Module en cours de développement.</p>
-    </div>
-  );
-}
-
-export default Etablissements;
+import React from "react"; import CrudPage from "../../components/common/CrudPage"; import {getEtablissements,createEtablissement,updateEtablissement,deleteEtablissement} from "../../services/administrationApi";
+export default function Etablissements(){const fields=[{name:"nom",label:"Nom",required:true},{name:"code",label:"Code",required:true},{name:"adresse",label:"Adresse",full:true},{name:"telephone",label:"Téléphone"},{name:"email",label:"Email",type:"email"},{name:"site_web",label:"Site web"},{name:"logo",label:"Logo"},{name:"devise",label:"Devise",default:"FCFA"},{name:"langue",label:"Langue",default:"fr"},{name:"fuseau_horaire",label:"Fuseau horaire",default:"Africa/Bamako"},{name:"actif",label:"Actif",type:"checkbox"}]; return <CrudPage title="Établissements" subtitle="Gestion des établissements" icon="🏫" load={getEtablissements} create={createEtablissement} update={updateEtablissement} remove={deleteEtablissement} rowKey="id_etablissement" initialForm={{nom:"",code:"",adresse:"",telephone:"",email:"",site_web:"",logo:"",devise:"FCFA",langue:"fr",fuseau_horaire:"Africa/Bamako",actif:true}} fields={fields} searchKeys={["nom","code","telephone","email"]} columns={[{key:"id_etablissement",label:"ID"},{key:"nom",label:"Nom"},{key:"code",label:"Code"},{key:"telephone",label:"Téléphone"},{key:"email",label:"Email"},{key:"devise",label:"Devise"},{key:"actif",label:"Actif",render:r=>r.actif?"Oui":"Non"}]}/> }

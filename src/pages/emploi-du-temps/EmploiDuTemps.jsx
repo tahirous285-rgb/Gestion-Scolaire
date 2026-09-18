@@ -1,10 +1,2 @@
-﻿function EmploiDuTemps() {
-  return (
-    <div className="page-container">
-      <h1>EmploiDuTemps</h1>
-      <p>Module en cours de développement.</p>
-    </div>
-  );
-}
-
-export default EmploiDuTemps;
+import React,{useEffect,useState} from "react"; import CrudPage from "../../components/common/CrudPage"; import {getEmplois,createEmploi,updateEmploi,deleteEmploi} from "../../services/emploiTempsApi"; import {getClasses} from "../../services/classesApi"; import {getMatieres} from "../../services/matieresApi"; import {getEnseignants} from "../../services/enseignantsApi"; import {getAnnees} from "../../services/anneesApi";
+export default function EmploiDuTemps(){const [o,setO]=useState({c:[],m:[],e:[],a:[]}); useEffect(()=>{Promise.all([getClasses(),getMatieres(),getEnseignants(),getAnnees()]).then(([c,m,e,a])=>setO({c,m,e,a})).catch(()=>{})},[]); const fields=[{name:"id_annee",label:"Année",type:"select",required:true,options:o.a.map(x=>({value:x.id_annee,label:x.libelle}))},{name:"id_classe",label:"Classe",type:"select",required:true,options:o.c.map(x=>({value:x.id_classe,label:x.nom}))},{name:"id_enseignant",label:"Enseignant",type:"select",required:true,options:o.e.map(x=>({value:x.id_enseignant,label:`${x.nom} ${x.prenom}`}))},{name:"id_matiere",label:"Matière",type:"select",required:true,options:o.m.map(x=>({value:x.id_matiere,label:`${x.code} — ${x.nom}`}))},{name:"jour_semaine",label:"Jour",type:"select",required:true,options:["Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi"].map(x=>({value:x,label:x}))},{name:"heure_debut",label:"Heure début",type:"time",required:true},{name:"heure_fin",label:"Heure fin",type:"time",required:true},{name:"salle",label:"Salle"},{name:"observation",label:"Observation",type:"textarea",full:true}]; return <CrudPage title="Emploi du temps" subtitle="Gestion des créneaux de cours" icon="🗓️" load={()=>getEmplois({})} create={createEmploi} update={updateEmploi} remove={deleteEmploi} rowKey="id_emploi" initialForm={{id_annee:"",id_classe:"",id_enseignant:"",id_matiere:"",jour_semaine:"Lundi",heure_debut:"",heure_fin:"",salle:"",observation:""}} fields={fields} searchKeys={["jour_semaine","heure_debut","heure_fin","salle"]} columns={[{key:"id_emploi",label:"ID"},{key:"jour_semaine",label:"Jour"},{key:"heure_debut",label:"Début"},{key:"heure_fin",label:"Fin"},{key:"id_classe",label:"Classe"},{key:"id_matiere",label:"Matière"},{key:"salle",label:"Salle"}]}/> }

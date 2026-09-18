@@ -1,10 +1,2 @@
-﻿function Notifications() {
-  return (
-    <div className="page-container">
-      <h1>Notifications</h1>
-      <p>Module en cours de développement.</p>
-    </div>
-  );
-}
-
-export default Notifications;
+import React,{useEffect,useState} from "react"; import CrudPage from "../../components/common/CrudPage"; import {getNotifications,createNotification,markNotificationRead} from "../../services/communicationApi"; import {establishmentId,userId} from "../../services/apiClient";
+export default function Notifications(){const fields=[{name:"titre",label:"Titre",required:true},{name:"contenu",label:"Contenu",type:"textarea",full:true},{name:"type",label:"Type"},{name:"lien",label:"Lien"}]; return <CrudPage title="Notifications" subtitle="Notifications utilisateurs" icon="🔔" load={()=>getNotifications(userId())} create={d=>createNotification({id_etablissement:establishmentId(),id_utilisateur:userId(),...d})} canUpdate={false} canDelete={false} rowKey="id_notification" initialForm={{titre:"",contenu:"",type:"",lien:""}} fields={fields} searchKeys={["titre","contenu","type"]} extraActions={(row,close)=><button onClick={async()=>{await markNotificationRead(row.id_notification);close()}}>✓ Marquer lue</button>} columns={[{key:"id_notification",label:"ID"},{key:"titre",label:"Titre"},{key:"type",label:"Type"},{key:"date_creation",label:"Création"},{key:"lue",label:"Lue",render:r=>r.lue?"Oui":"Non"}]}/> }

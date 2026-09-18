@@ -1,10 +1,2 @@
-﻿function Notes() {
-  return (
-    <div className="page-container">
-      <h1>Notes</h1>
-      <p>Module en cours de développement.</p>
-    </div>
-  );
-}
-
-export default Notes;
+import React,{useEffect,useState} from "react"; import CrudPage from "../../components/common/CrudPage"; import {getNotes,createNote,updateNote,deleteNote} from "../../services/notesApi"; import {getInscriptions} from "../../services/inscriptionsApi"; import {getEvaluations} from "../../services/evaluationsApi";
+export default function Notes(){const [o,setO]=useState({i:[],e:[]}); useEffect(()=>{Promise.all([getInscriptions(),getEvaluations()]).then(([i,e])=>setO({i,e})).catch(()=>{})},[]); const fields=[{name:"id_evaluation",label:"Évaluation",type:"select",required:true,options:o.e.map(x=>({value:x.id_evaluation,label:x.libelle}))},{name:"id_inscription",label:"Inscription",type:"select",required:true,options:o.i.map(x=>({value:x.id_inscription,label:`#${x.id_inscription} — classe ${x.id_classe}`}))},{name:"valeur",label:"Valeur",type:"number",step:"0.01",min:"0"},{name:"absence",label:"Absent",type:"checkbox"},{name:"observation",label:"Observation",type:"textarea",full:true}]; return <CrudPage title="Notes" subtitle="Gestion des notes des élèves" icon="🎯" load={getNotes} create={createNote} update={updateNote} remove={deleteNote} rowKey="id_note" initialForm={{id_evaluation:"",id_inscription:"",valeur:"",absence:false,observation:""}} fields={fields} searchKeys={["id_evaluation","id_inscription","valeur"]} columns={[{key:"id_note",label:"ID"},{key:"id_evaluation",label:"Évaluation"},{key:"id_inscription",label:"Inscription"},{key:"valeur",label:"Note"},{key:"absence",label:"Absence",render:r=>r.absence?"Oui":"Non"},{key:"observation",label:"Observation"}]}/> }

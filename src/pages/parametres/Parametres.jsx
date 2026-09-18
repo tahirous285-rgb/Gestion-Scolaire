@@ -1,10 +1,2 @@
-﻿function Parametres() {
-  return (
-    <div className="page-container">
-      <h1>Parametres</h1>
-      <p>Module en cours de développement.</p>
-    </div>
-  );
-}
-
-export default Parametres;
+import React,{useEffect,useState} from "react"; import CrudPage from "../../components/common/CrudPage"; import {getParametres,createParametre,updateParametre} from "../../services/administrationApi"; import {establishmentId} from "../../services/apiClient";
+export default function Parametres(){const fields=[{name:"cle",label:"Clé",required:true},{name:"valeur",label:"Valeur"},{name:"description",label:"Description",type:"textarea",full:true}]; return <CrudPage title="Paramètres" subtitle="Configuration de l'établissement" icon="⚙️" load={()=>getParametres(establishmentId())} create={d=>createParametre({id_etablissement:establishmentId(),...d})} update={updateParametre} canDelete={false} rowKey="id_parametre" initialForm={{cle:"",valeur:"",description:""}} fields={fields} searchKeys={["cle","valeur","description"]} columns={[{key:"id_parametre",label:"ID"},{key:"cle",label:"Clé"},{key:"valeur",label:"Valeur"},{key:"description",label:"Description"},{key:"date_modification",label:"Modification"}]}/> }

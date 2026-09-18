@@ -1,10 +1,2 @@
-﻿function Utilisateurs() {
-  return (
-    <div className="page-container">
-      <h1>Utilisateurs</h1>
-      <p>Module en cours de développement.</p>
-    </div>
-  );
-}
-
-export default Utilisateurs;
+import React,{useEffect,useState} from "react"; import CrudPage from "../../components/common/CrudPage"; import {getUtilisateurs,createUtilisateur,updateUtilisateur,deleteUtilisateur,getEtablissements,getRoles} from "../../services/administrationApi"; import {establishmentId} from "../../services/apiClient";
+export default function Utilisateurs(){const [o,setO]=useState({e:[],r:[]}); useEffect(()=>{Promise.all([getEtablissements(),getRoles()]).then(([e,r])=>setO({e,r})).catch(()=>{})},[]); const fields=[{name:"id_etablissement",label:"Établissement",type:"select",required:true,options:o.e.map(x=>({value:x.id_etablissement,label:x.nom}))},{name:"id_role",label:"Rôle",type:"select",required:true,options:o.r.map(x=>({value:x.id_role,label:x.nom}))},{name:"nom",label:"Nom",required:true},{name:"prenom",label:"Prénom",required:true},{name:"email",label:"Email",type:"email",required:true},{name:"telephone",label:"Téléphone"},{name:"login",label:"Login",required:true},{name:"mot_de_passe",label:"Mot de passe",type:"password"},{name:"statut",label:"Statut"}]; return <CrudPage title="Utilisateurs" subtitle="Comptes utilisateurs de l'application" icon="👤" load={getUtilisateurs} create={d=>createUtilisateur({id_etablissement:Number(d.id_etablissement)||establishmentId(),...d,id_role:Number(d.id_role)})} update={(id,d)=>updateUtilisateur(id,{...d,id_role:d.id_role?Number(d.id_role):undefined})} remove={deleteUtilisateur} rowKey="id_utilisateur" initialForm={{id_etablissement:establishmentId(),id_role:"",nom:"",prenom:"",email:"",telephone:"",login:"",mot_de_passe:"",statut:"actif"}} fields={fields} searchKeys={["nom","prenom","email","login"]} columns={[{key:"id_utilisateur",label:"ID"},{key:"nom",label:"Nom"},{key:"prenom",label:"Prénom"},{key:"email",label:"Email"},{key:"login",label:"Login"},{key:"statut",label:"Statut"},{key:"id_role",label:"Rôle"}]}/> }

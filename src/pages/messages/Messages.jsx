@@ -1,10 +1,2 @@
-﻿function Messages() {
-  return (
-    <div className="page-container">
-      <h1>Messages</h1>
-      <p>Module en cours de développement.</p>
-    </div>
-  );
-}
-
-export default Messages;
+import React,{useEffect,useState} from "react"; import CrudPage from "../../components/common/CrudPage"; import {getMessages,createMessage,markMessageRead} from "../../services/communicationApi"; import {establishmentId,userId} from "../../services/apiClient"; import {getUtilisateurs} from "../../services/administrationApi";
+export default function Messages(){const [u,setU]=useState([]); useEffect(()=>{getUtilisateurs().then(setU).catch(()=>{})},[]); const fields=[{name:"id_destinataire",label:"Destinataire",type:"select",required:true,options:u.filter(x=>x.id_utilisateur!==userId()).map(x=>({value:x.id_utilisateur,label:`${x.nom} ${x.prenom} — ${x.login}`}))},{name:"objet",label:"Objet"},{name:"contenu",label:"Contenu",type:"textarea",required:true,full:true}]; return <CrudPage title="Messages" subtitle="Messagerie interne" icon="✉️" load={()=>getMessages({id_expediteur:userId()})} create={d=>createMessage({id_etablissement:establishmentId(),id_expediteur:userId(),...d})} canUpdate={false} canDelete={false} rowKey="id_message" initialForm={{id_destinataire:"",objet:"",contenu:""}} fields={fields} searchKeys={["objet","contenu","id_destinataire"]} extraActions={(row,close)=><button onClick={async()=>{await markMessageRead(row.id_message);close()}}>✓ Marquer lu</button>} columns={[{key:"id_message",label:"ID"},{key:"id_destinataire",label:"Destinataire"},{key:"objet",label:"Objet"},{key:"date_envoi",label:"Envoi"},{key:"lu",label:"Lu",render:r=>r.lu?"Oui":"Non"}]}/> }
