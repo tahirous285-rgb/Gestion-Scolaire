@@ -3,7 +3,7 @@ const API_URL =
   "http://127.0.0.1:8000/api/v1";
 
 const PRESENCES_URL =
-  `${API_URL}/presences-eleves`;
+  `${API_URL}/presences-enseignants`;
 
 async function handleResponse(response) {
   if (response.ok) {
@@ -26,20 +26,26 @@ async function handleResponse(response) {
         .map((error) => error.msg)
         .join(", ");
     }
-  } catch {}
+  } catch {
+    // Réponse non JSON
+  }
 
   throw new Error(message);
 }
 
-export async function getPresences({
-  idInscription = null,
+/**
+ * Récupérer les présences des enseignants.
+ * Le backend accepte un filtre facultatif par enseignant.
+ */
+export async function getPresencesEnseignants({
+  idEnseignant = null,
 } = {}) {
   const params = new URLSearchParams();
 
-  if (idInscription) {
+  if (idEnseignant) {
     params.set(
-      "id_inscription",
-      String(idInscription)
+      "id_enseignant",
+      String(idEnseignant)
     );
   }
 
@@ -54,7 +60,27 @@ export async function getPresences({
   return handleResponse(response);
 }
 
-export async function createPresence(data) {
+/**
+ * Récupérer une présence précise.
+ * Attention : cette route n'est pas exposée actuellement
+ * par le backend. Fonction conservée pour usage futur.
+ */
+export async function getPresenceEnseignant(
+  idPresence
+) {
+  const response = await fetch(
+    `${PRESENCES_URL}/${idPresence}`
+  );
+
+  return handleResponse(response);
+}
+
+/**
+ * Créer une présence enseignant.
+ */
+export async function createPresenceEnseignant(
+  data
+) {
   const response = await fetch(
     `${PRESENCES_URL}/`,
     {
@@ -69,7 +95,10 @@ export async function createPresence(data) {
   return handleResponse(response);
 }
 
-export async function updatePresence(
+/**
+ * Modifier une présence enseignant.
+ */
+export async function updatePresenceEnseignant(
   idPresence,
   data
 ) {

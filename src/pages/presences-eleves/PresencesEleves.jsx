@@ -1,2 +1,52 @@
-import React,{useEffect,useState} from "react"; import CrudPage from "../../components/common/CrudPage"; import {getPresencesEleves,createPresenceEleve,updatePresenceEleve} from "../../services/presencesElevesApi"; import {getInscriptions} from "../../services/inscriptionsApi";
-export default function PresencesEleves(){const [ins,setIns]=useState([]); useEffect(()=>{getInscriptions().then(setIns).catch(()=>{})},[]); const status=["PRESENT","ABSENT","RETARD","EXCUSE"]; const fields=[{name:"id_inscription",label:"Inscription",type:"select",required:true,options:ins.map(x=>({value:x.id_inscription,label:`#${x.id_inscription} — classe ${x.id_classe}`}))},{name:"date_presence",label:"Date",type:"date",required:true},{name:"statut",label:"Statut",type:"select",required:true,options:status.map(x=>({value:x,label:x}))},{name:"heure_arrivee",label:"Heure arrivée"},{name:"heure_depart",label:"Heure départ"},{name:"motif",label:"Motif"},{name:"justifiee",label:"Justifiée",type:"checkbox"},{name:"observation",label:"Observation",type:"textarea",full:true}]; return <CrudPage title="Présences élèves" subtitle="Suivi quotidien des présences" icon="✅" load={()=>getPresencesEleves()} create={createPresenceEleve} update={updatePresenceEleve} canDelete={false} rowKey="id_presence" initialForm={{id_inscription:"",date_presence:new Date().toISOString().slice(0,10),statut:"PRESENT",heure_arrivee:"",heure_depart:"",motif:"",justifiee:false,observation:""}} fields={fields} searchKeys={["id_inscription","date_presence","statut"]} columns={[{key:"id_presence",label:"ID"},{key:"id_inscription",label:"Inscription"},{key:"date_presence",label:"Date"},{key:"statut",label:"Statut"},{key:"heure_arrivee",label:"Arrivée"},{key:"heure_depart",label:"Départ"},{key:"justifiee",label:"Justifiée",render:r=>r.justifiee?"Oui":"Non"}]}/> }
+import CrudPage from "../../components/common/CrudPage";
+import {
+  createPresence,
+  getPresences,
+  updatePresence,
+} from "../../services/presencesElevesApi";
+
+import "./Presences-eleves.css";
+
+const columns = [
+  { key: "id_presence", label: "ID" },
+  { key: "id_inscription", label: "Inscription" },
+  { key: "date", label: "Date" },
+  { key: "statut", label: "Statut" },
+  { key: "justification", label: "Justification" },
+];
+
+const fields = [
+  { name: "id_inscription", label: "Inscription", type: "number", required: true },
+  { name: "date", label: "Date", type: "date", required: true },
+  {
+    name: "statut",
+    label: "Statut",
+    type: "select",
+    required: true,
+    options: [
+      { value: "present", label: "Présent" },
+      { value: "absent", label: "Absent" },
+      { value: "retard", label: "Retard" },
+      { value: "excuse", label: "Excusé" },
+    ],
+  },
+  { name: "justification", label: "Justification", type: "textarea", full: true },
+];
+
+export default function PresencesEleves() {
+  return (
+    <CrudPage
+      title="Présences des élèves"
+      subtitle="Suivez les présences et absences quotidiennes."
+      icon="📋"
+      columns={columns}
+      fields={fields}
+      load={getPresences}
+      create={createPresence}
+      update={updatePresence}
+      rowKey="id_presence"
+      searchKeys={["id_presence", "id_inscription", "date", "statut", "justification"]}
+      initialForm={{ id_inscription: "", date: "", statut: "present", justification: "" }}
+    />
+  );
+}
