@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
   GraduationCap,
   Users,
@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 
 import { getDashboard } from "../../services/dashboardApi";
+import { establishmentId } from "../../services/apiClient";
 
 import "./Dashboard.css";
 
@@ -24,68 +25,50 @@ function Dashboard() {
   const [error, setError] = useState("");
 
   /**
-   * Pour le moment, l'authentification n'est pas encore connectée
-   * au backend.
-   *
-   * Priorité :
-   * 1. localStorage
-   * 2. variable Vite
-   * 3. valeur temporaire 2
-   *
-   * Le "2" sera supprimé lorsque le système d'authentification
-   * fournira automatiquement l'établissement connecté.
-   */
-  const getIdEtablissement = () => {
-    const storedId = localStorage.getItem("id_etablissement");
-
-    if (storedId) {
-      return Number(storedId);
-    }
-
-    if (import.meta.env.VITE_ID_ETABLISSEMENT) {
-      return Number(import.meta.env.VITE_ID_ETABLISSEMENT);
-    }
-
-    return 2;
-  };
-
-  /**
    * Charger le Dashboard
    */
-  const chargerDashboard = async (isRefresh = false) => {
-    try {
-      if (isRefresh) {
-        setRefreshing(true);
-      } else {
-        setLoading(true);
-      }
-
-      setError("");
-
-      const idEtablissement = getIdEtablissement();
-
-      const data = await getDashboard(idEtablissement);
-
-      setDashboard(data);
-    } catch (err) {
-      console.error("Erreur Dashboard :", err);
-
-      setError(
-        err.message ||
-          "Impossible de récupérer les données du Dashboard."
-      );
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
+  const chargerDashboard = useCallback(async (isRefresh = false) => {
+  try {
+    if (isRefresh) {
+      setRefreshing(true);
+    } else {
+      setLoading(true);
     }
-  };
+
+    setError("");
+
+    const data = await getDashboard(establishmentId());
+
+    setDashboard(data);
+  } catch (err) {
+    console.error("Erreur Dashboard :", err);
+
+    setError(
+      err.message ||
+        "Impossible de récupérer les données du Dashboard."
+    );
+  } finally {
+    setLoading(false);
+    setRefreshing(false);
+  }
+}, []);
 
   /**
    * Chargement initial
    */
   useEffect(() => {
-    chargerDashboard();
-  }, []);
+  chargerDashboard();
+
+  const handleFocus = () => {
+    chargerDashboard(true);
+  };
+
+  window.addEventListener("focus", handleFocus);
+
+  return () => {
+    window.removeEventListener("focus", handleFocus);
+  };
+}, [chargerDashboard]);
 
   /**
    * Actualisation manuelle

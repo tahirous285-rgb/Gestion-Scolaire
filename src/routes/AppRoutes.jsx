@@ -1,4 +1,5 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Navigate, Outlet, Route, Routes } from "react-router-dom";
+import { isAuthenticated } from "../services/apiClient";
 
 import DashboardLayout from "../layouts/DashboardLayout";
 
@@ -57,6 +58,14 @@ import Annonces from "../pages/annonces/Annonces";
 import Messages from "../pages/messages/Messages";
 import Notifications from "../pages/notifications/Notifications";
 
+function ProtectedRoute() {
+  return isAuthenticated() ? <Outlet /> : <Navigate to="/login" replace />;
+}
+
+function PublicOnlyRoute({ children }) {
+  return isAuthenticated() ? <Navigate to="/dashboard" replace /> : children;
+}
+
 function AppRoutes() {
   return (
     <Routes>
@@ -64,11 +73,12 @@ function AppRoutes() {
       {/* =========================
           AUTHENTIFICATION
           ========================= */}
-      <Route path="/login" element={<Login />} />
+      <Route path="/login" element={<PublicOnlyRoute><Login /></PublicOnlyRoute>} />
 
       {/* =========================
           APPLICATION
           ========================= */}
+      <Route element={<ProtectedRoute />}>
       <Route path="/" element={<DashboardLayout />}>
 
         <Route
@@ -265,13 +275,14 @@ function AppRoutes() {
         />
 
       </Route>
+      </Route>
 
       {/* =========================
           ROUTE INCONNUE
           ========================= */}
       <Route
         path="*"
-        element={<Navigate to="/dashboard" replace />}
+        element={<Navigate to={isAuthenticated() ? "/dashboard" : "/login"} replace />}
       />
 
     </Routes>

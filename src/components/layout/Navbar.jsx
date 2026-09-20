@@ -1,14 +1,23 @@
 import {
   Search,
   Bell,
+  LogOut,
   UserCircle,
   Menu,
 } from "lucide-react";
 
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { clearSession, currentUser } from "../../services/apiClient";
 
 function Navbar() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const user = currentUser();
+
+  function handleLogout() {
+    clearSession();
+    navigate("/login", { replace: true });
+  }
 
   // Correspondance entre les routes et les titres
   const pageTitles = {
@@ -126,10 +135,18 @@ function Navbar() {
           <UserCircle size={34} />
 
           <div className="user-info">
-            <strong>Administrateur</strong>
-            <span>Administrateur</span>
+            <strong>{[user.prenom, user.nom].filter(Boolean).join(" ") || "Utilisateur"}</strong>
+            <span>{user.id_role ? `Rôle #${user.id_role}` : "Utilisateur"}</span>
           </div>
 
+          <button
+            className="icon-button"
+            type="button"
+            aria-label="Se déconnecter"
+            onClick={handleLogout}
+          >
+            <LogOut size={19} />
+          </button>
         </div>
 
       </div>
