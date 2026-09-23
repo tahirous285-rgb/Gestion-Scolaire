@@ -41,3 +41,15 @@ export async function getAnnee(
 
   return handleResponse(response);
 }
+
+export async function createAnnee(data) {
+  const response = await fetch(`${URL}/`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+
+  return handleResponse(response);
+}

@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 
 import { getDashboard } from "../../services/dashboardApi";
-import { establishmentId } from "../../services/apiClient";
+import { currentUser, establishmentId } from "../../services/apiClient";
 
 import "./Dashboard.css";
 
@@ -38,7 +38,6 @@ function Dashboard() {
     setError("");
 
     const data = await getDashboard(establishmentId());
-
     setDashboard(data);
   } catch (err) {
     console.error("Erreur Dashboard :", err);
@@ -51,7 +50,7 @@ function Dashboard() {
     setLoading(false);
     setRefreshing(false);
   }
-}, []);
+  }, []);
 
   /**
    * Chargement initial
@@ -177,6 +176,10 @@ function Dashboard() {
     depenses: 0,
   };
 
+  const activites = dashboard.activites_recentes || [];
+  const user = currentUser();
+  const nomUtilisateur = [user.prenom, user.nom].filter(Boolean).join(" ");
+
   return (
     <div className="dashboard">
 
@@ -191,7 +194,7 @@ function Dashboard() {
           </span>
 
           <h2>
-            Bonjour, Administrateur 👋
+            Bonjour{nomUtilisateur ? `, ${nomUtilisateur}` : ""}
           </h2>
 
           <p>
@@ -463,9 +466,7 @@ function Dashboard() {
               Activités récentes
             </h3>
 
-            <p>
-              Fonctionnalité en attente côté API
-            </p>
+              <p>Dernières actions enregistrées</p>
           </div>
 
           <div className="card-header-icon">
@@ -474,17 +475,26 @@ function Dashboard() {
         </div>
 
         <div className="dashboard-info-content">
-          <p>
-            Le backend actuel fournit les statistiques
-            du Dashboard, les présences et les données
-            financières, mais aucune route ne fournit
-            encore les activités récentes.
-          </p>
-
-          <span>
-            Cette section sera reliée au Journal d'activité
-            lorsque son endpoint API sera disponible.
-          </span>
+          {activites.length > 0 ? (
+            <div className="activity-list">
+              {activites.map((activite) => (
+                <div className="activity-item" key={activite.id_journal}>
+                  <div>
+                    <strong>{activite.action}</strong>
+                    <span>{activite.module}</span>
+                  </div>
+                  <time dateTime={activite.date_action}>
+                    {new Intl.DateTimeFormat("fr-FR", {
+                      dateStyle: "short",
+                      timeStyle: "short",
+                    }).format(new Date(activite.date_action))}
+                  </time>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p>Aucune activité récente pour cet établissement.</p>
+          )}
         </div>
 
       </div>

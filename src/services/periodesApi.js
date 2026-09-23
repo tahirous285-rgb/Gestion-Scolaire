@@ -45,3 +45,15 @@ export async function getPeriodes(
 
   return handleResponse(response);
 }
+
+export async function createPeriode(data) {
+  const response = await fetch(`${PERIODES_URL}/`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+
+  return handleResponse(response);
+}

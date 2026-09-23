@@ -8,6 +8,7 @@ import {
   getBulletins,
   createBulletin,
   updateBulletin,
+  generateBulletinPdf,
 } from "../../services/bulletinsApi";
 
 import { getInscriptions } from "../../services/inscriptionsApi";
@@ -403,6 +404,19 @@ export default function Bulletins() {
     }
   }
 
+  async function handleGeneratePdf(bulletin) {
+    try {
+      setError("");
+      setSuccess("");
+      const generated = await generateBulletinPdf(bulletin.id_bulletin);
+      setBulletins((current) => current.map((item) => item.id_bulletin === generated.id_bulletin ? generated : item));
+      setSelectedBulletin((current) => current?.id_bulletin === generated.id_bulletin ? generated : current);
+      setSuccess("PDF du bulletin généré avec succès.");
+    } catch (err) {
+      setError(err.message || "Impossible de générer le PDF du bulletin.");
+    }
+  }
+
   return (
     <div className="bulletins-page">
       <div className="bulletins-header">
@@ -625,6 +639,14 @@ export default function Bulletins() {
                               }
                             >
                               ✏️
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => handleGeneratePdf(bulletin)}
+                              title="Générer le PDF"
+                            >
+                              PDF
                             </button>
                           </div>
                         </td>

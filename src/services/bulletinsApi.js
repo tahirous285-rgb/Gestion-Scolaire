@@ -102,3 +102,14 @@ export async function updateBulletin(
 
   return handleResponse(response);
 }
+
+export async function generateBulletinPdf(idBulletin) {
+  const response = await fetch(
+    `${BULLETINS_URL}/${idBulletin}/generer-pdf`,
+    {
+      method: "PUT",
+    }
+  );
+
+  return handleResponse(response);
+}

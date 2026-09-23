@@ -13,14 +13,16 @@ const columns = [
   { key: "id_evaluation", label: "Évaluation" },
   { key: "id_inscription", label: "Inscription" },
   { key: "valeur", label: "Note" },
-  { key: "appreciation", label: "Appréciation" },
+  { key: "absence", label: "Absence", render: (row) => row.absence ? "Oui" : "Non" },
+  { key: "observation", label: "Observation" },
 ];
 
 const fields = [
   { name: "id_evaluation", label: "Évaluation", type: "number", required: true },
   { name: "id_inscription", label: "Inscription", type: "number", required: true },
   { name: "valeur", label: "Note", type: "number", required: true, min: 0, step: 0.01 },
-  { name: "appreciation", label: "Appréciation", type: "textarea", full: true },
+  { name: "absence", label: "Absence", type: "checkbox", checkLabel: "Élève absent" },
+  { name: "observation", label: "Observation", type: "textarea", full: true },
 ];
 
 export default function Notes() {
@@ -36,8 +38,8 @@ export default function Notes() {
       update={updateNote}
       remove={deleteNote}
       rowKey="id_note"
-      searchKeys={["id_note", "id_evaluation", "id_inscription", "valeur", "appreciation"]}
-      initialForm={{ id_evaluation: "", id_inscription: "", valeur: "", appreciation: "" }}
+      searchKeys={["id_note", "id_evaluation", "id_inscription", "valeur", "observation"]}
+      initialForm={{ id_evaluation: "", id_inscription: "", valeur: "", absence: false, observation: "" }}
     />
   );
 }

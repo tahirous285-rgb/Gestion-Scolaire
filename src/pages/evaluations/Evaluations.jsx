@@ -10,6 +10,7 @@ import {
 } from "../../services/evaluationsApi";
 
 import { getAnnees } from "../../services/anneesApi";
+import { getPeriodes } from "../../services/periodesApi";
 import { getClasses } from "../../services/classesApi";
 import { getMatieres } from "../../services/matieresApi";
 import { getEnseignants } from "../../services/enseignantsApi";
@@ -173,21 +174,7 @@ export default function Evaluations() {
       setLoadingPeriodes(true);
       setError("");
 
-      const response = await fetch(
-        `${
-          import.meta.env.VITE_API_URL ||
-          "http://127.0.0.1:8000/api/v1"
-        }/periodes/?id_annee=${idAnnee}`
-      );
-
-      if (!response.ok) {
-        throw new Error(
-          `Erreur HTTP ${response.status}`
-        );
-      }
-
-      const data =
-        await response.json();
+      const data = await getPeriodes(Number(idAnnee));
 
       setPeriodes(
         Array.isArray(data)
