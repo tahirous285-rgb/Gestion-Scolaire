@@ -58,7 +58,9 @@ export async function apiRequest(path, options = {}) {
     ...requestOptions,
     headers: { "Content-Type": "application/json", ...headers },
   });
-  if (response.ok) return response.status === 204 ? null : response.json();
+  if (response.ok) {
+    return response.status === 204 ? null : response.json();
+  }
   let message = `Erreur HTTP ${response.status}`;
   try {
     const data = await response.json();
@@ -73,8 +75,15 @@ export const apiPut = (path, body) => apiRequest(path, { method: "PUT", body: JS
 export const apiDelete = (path) => apiRequest(path, { method: "DELETE" });
 
 export async function login(credentials) {
-  const session = await apiPost("/auth/login", credentials);
-  const authenticatedSession = { ...session, id_etablissement: credentials.id_etablissement };
+  const session = await apiPost("/auth/login", {
+    id_etablissement: Number(credentials.id_etablissement),
+    login: credentials.login,
+    mot_de_passe: credentials.mot_de_passe,
+  });
+  const authenticatedSession = {
+    ...session,
+    id_etablissement: Number(credentials.id_etablissement),
+  };
   saveSession(authenticatedSession);
   return authenticatedSession;
 }

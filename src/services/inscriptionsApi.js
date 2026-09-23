@@ -1,41 +1,10 @@
-const API_URL =
-  import.meta.env.VITE_API_URL ||
-  "http://localhost:8000/api/v1";
+import { apiDelete, apiGet, apiPost, apiPut } from "./apiClient";
 
-const INSCRIPTIONS_URL =
-  `${API_URL}/inscriptions`;
+const INSCRIPTIONS_URL = "/inscriptions";
 
 /**
  * Gestion des réponses API
  */
-async function handleResponse(response) {
-  if (response.ok) {
-    if (response.status === 204) {
-      return null;
-    }
-
-    return await response.json();
-  }
-
-  let message = `Erreur HTTP ${response.status}`;
-
-  try {
-    const errorData = await response.json();
-
-    if (typeof errorData?.detail === "string") {
-      message = errorData.detail;
-    } else if (Array.isArray(errorData?.detail)) {
-      message = errorData.detail
-        .map((error) => error.msg)
-        .join(", ");
-    }
-  } catch {
-    // Rien
-  }
-
-  throw new Error(message);
-}
-
 /**
  * Toutes les inscriptions
  */
@@ -66,9 +35,7 @@ export async function getInscriptions({
     ? `${INSCRIPTIONS_URL}/?${query}`
     : `${INSCRIPTIONS_URL}/`;
 
-  const response = await fetch(url);
-
-  return handleResponse(response);
+  return apiGet(url);
 }
 
 /**
@@ -77,11 +44,7 @@ export async function getInscriptions({
 export async function getInscription(
   idInscription
 ) {
-  const response = await fetch(
-    `${INSCRIPTIONS_URL}/${idInscription}`
-  );
-
-  return handleResponse(response);
+  return apiGet(`${INSCRIPTIONS_URL}/${idInscription}`);
 }
 
 /**
@@ -90,18 +53,7 @@ export async function getInscription(
 export async function createInscription(
   data
 ) {
-  const response = await fetch(
-    `${INSCRIPTIONS_URL}/`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(data),
-    }
-  );
-
-  return handleResponse(response);
+  return apiPost(`${INSCRIPTIONS_URL}/`, data);
 }
 
 /**
@@ -111,18 +63,7 @@ export async function updateInscription(
   idInscription,
   data
 ) {
-  const response = await fetch(
-    `${INSCRIPTIONS_URL}/${idInscription}`,
-    {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(data),
-    }
-  );
-
-  return handleResponse(response);
+  return apiPut(`${INSCRIPTIONS_URL}/${idInscription}`, data);
 }
 
 /**
@@ -131,12 +72,5 @@ export async function updateInscription(
 export async function deleteInscription(
   idInscription
 ) {
-  const response = await fetch(
-    `${INSCRIPTIONS_URL}/${idInscription}`,
-    {
-      method: "DELETE",
-    }
-  );
-
-  return handleResponse(response);
+  return apiDelete(`${INSCRIPTIONS_URL}/${idInscription}`);
 }

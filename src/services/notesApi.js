@@ -1,36 +1,6 @@
-const API_URL =
-  import.meta.env.VITE_API_URL ||
-  "http://127.0.0.1:8000/api/v1";
+import { apiDelete, apiGet, apiPost, apiPut } from "./apiClient";
 
-const NOTES_URL = `${API_URL}/notes`;
-
-async function handleResponse(response) {
-  if (response.ok) {
-    if (response.status === 204) {
-      return null;
-    }
-
-    return await response.json();
-  }
-
-  let message = `Erreur HTTP ${response.status}`;
-
-  try {
-    const errorData = await response.json();
-
-    if (typeof errorData?.detail === "string") {
-      message = errorData.detail;
-    } else if (Array.isArray(errorData?.detail)) {
-      message = errorData.detail
-        .map((error) => error.msg)
-        .join(", ");
-    }
-  } catch {
-    // Réponse non JSON
-  }
-
-  throw new Error(message);
-}
+const NOTES_URL = "/notes";
 
 export async function getNotes({
   idEvaluation = null,
@@ -56,58 +26,21 @@ export async function getNotes({
     ? `?${params.toString()}`
     : "";
 
-  const response = await fetch(
-    `${NOTES_URL}/${query}`
-  );
-
-  return handleResponse(response);
+  return apiGet(`${NOTES_URL}/${query}`);
 }
 
 export async function getNote(idNote) {
-  const response = await fetch(
-    `${NOTES_URL}/${idNote}`
-  );
-
-  return handleResponse(response);
+  return apiGet(`${NOTES_URL}/${idNote}`);
 }
 
 export async function createNote(data) {
-  const response = await fetch(
-    `${NOTES_URL}/`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(data),
-    }
-  );
-
-  return handleResponse(response);
+  return apiPost(`${NOTES_URL}/`, data);
 }
 
 export async function updateNote(idNote, data) {
-  const response = await fetch(
-    `${NOTES_URL}/${idNote}`,
-    {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(data),
-    }
-  );
-
-  return handleResponse(response);
+  return apiPut(`${NOTES_URL}/${idNote}`, data);
 }
 
 export async function deleteNote(idNote) {
-  const response = await fetch(
-    `${NOTES_URL}/${idNote}`,
-    {
-      method: "DELETE",
-    }
-  );
-
-  return handleResponse(response);
+  return apiDelete(`${NOTES_URL}/${idNote}`);
 }
