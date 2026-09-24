@@ -1,2 +1,17 @@
-import React,{useEffect,useState} from "react"; import CrudPage from "../../components/common/CrudPage"; import {getNotifications,createNotification,markNotificationRead} from "../../services/communicationApi"; import {establishmentId,userId} from "../../services/apiClient";
-export default function Notifications(){const fields=[{name:"titre",label:"Titre",required:true},{name:"contenu",label:"Contenu",type:"textarea",full:true},{name:"type",label:"Type"},{name:"lien",label:"Lien"}]; return <CrudPage title="Notifications" subtitle="Notifications utilisateurs" icon="🔔" load={()=>getNotifications(userId())} create={d=>createNotification({id_etablissement:establishmentId(),id_utilisateur:userId(),...d})} canUpdate={false} canDelete={false} rowKey="id_notification" initialForm={{titre:"",contenu:"",type:"",lien:""}} fields={fields} searchKeys={["titre","contenu","type"]} extraActions={(row,close)=><button onClick={async()=>{await markNotificationRead(row.id_notification);close()}}>✓ Marquer lue</button>} columns={[{key:"id_notification",label:"ID"},{key:"titre",label:"Titre"},{key:"type",label:"Type"},{key:"date_creation",label:"Création"},{key:"lue",label:"Lue",render:r=>r.lue?"Oui":"Non"}]}/> }
+import CrudPage from "../../components/common/CrudPage";
+import { establishmentId, userId } from "../../services/apiClient";
+import { createNotification, getNotifications, markNotificationRead } from "../../services/communicationApi";
+import { formatDateTime } from "../pageUtils";
+
+const fields = [
+  { name: "titre", label: "Titre", required: true },
+  { name: "contenu", label: "Contenu", type: "textarea", full: true },
+  { name: "type", label: "Type" },
+  { name: "lien", label: "Lien" },
+];
+
+export default function Notifications() {
+  const idEtablissement = establishmentId();
+  const idUtilisateur = userId();
+  return <CrudPage title="Notifications" subtitle="Notifications reçues par l’utilisateur connecté." icon="🔔" columns={[{ key: "titre", label: "Titre" }, { key: "contenu", label: "Contenu" }, { key: "type", label: "Type" }, { key: "date_creation", label: "Créée le", render: (row) => formatDateTime(row.date_creation) }, { key: "lue", label: "Lue", render: (row) => row.lue ? "Oui" : "Non" }]} fields={fields} initialForm={{ id_etablissement: idEtablissement || "", id_utilisateur: idUtilisateur || "", titre: "", contenu: "", type: "", lien: "" }} load={() => getNotifications(idUtilisateur)} create={createNotification} createPayload={(data) => ({ ...data, id_etablissement: idEtablissement, id_utilisateur: idUtilisateur })} extraActions={(row, { runAction, busy }) => !row.lue && <button type="button" disabled={busy} onClick={() => runAction(() => markNotificationRead(row.id_notification))}>✓ Marquer lue</button>} canUpdate={false} canDelete={false} rowKey="id_notification" createLabel="Nouvelle notification" searchKeys={["titre", "contenu", "type"]} emptyText="Aucune notification." />;
+}

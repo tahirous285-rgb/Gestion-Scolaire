@@ -1,1 +1,11 @@
-import { apiGet, apiPost, apiPut } from "./apiClient"; export const getPresencesEnseignants=(id_enseignant)=>apiGet(`/presences-enseignants/${id_enseignant?`?id_enseignant=${id_enseignant}`:""}`); export const createPresenceEnseignant=d=>apiPost("/presences-enseignants/",d); export const updatePresenceEnseignant=(id,d)=>apiPut(`/presences-enseignants/${id}`,d); export const getCoursEffectues=({id_enseignant,id_classe}={})=>apiGet(`/cours-effectues/?${new URLSearchParams({...(id_enseignant?{id_enseignant}:{}),...(id_classe?{id_classe}:{})})}`); export const createCoursEffectue=d=>apiPost("/cours-effectues/",d);
+import { apiGet, apiPost, apiPut } from "./apiClient";
+
+export const getPresencesEnseignants = (id_enseignant) =>
+  apiGet("/presences-enseignants/", { id_enseignant });
+export const createPresenceEnseignant = (data) => apiPost("/presences-enseignants/", data);
+export const updatePresenceEnseignant = (id, data) =>
+  apiPut(`/presences-enseignants/${id}`, data);
+
+export const getCoursEffectues = ({ id_enseignant, id_classe } = {}) =>
+  apiGet("/cours-effectues/", { id_enseignant, id_classe });
+export const createCoursEffectue = (data) => apiPost("/cours-effectues/", data);

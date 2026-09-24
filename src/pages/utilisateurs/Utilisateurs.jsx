@@ -1,2 +1,58 @@
-import React,{useEffect,useState} from "react"; import CrudPage from "../../components/common/CrudPage"; import {getUtilisateurs,createUtilisateur,updateUtilisateur,deleteUtilisateur,getEtablissements,getRoles} from "../../services/administrationApi"; import {establishmentId} from "../../services/apiClient";
-export default function Utilisateurs(){const [o,setO]=useState({e:[],r:[]}); useEffect(()=>{Promise.all([getEtablissements(),getRoles()]).then(([e,r])=>setO({e,r})).catch(()=>{})},[]); const fields=[{name:"id_etablissement",label:"Établissement",type:"select",required:true,options:o.e.map(x=>({value:x.id_etablissement,label:x.nom}))},{name:"id_role",label:"Rôle",type:"select",required:true,options:o.r.map(x=>({value:x.id_role,label:x.nom}))},{name:"nom",label:"Nom",required:true},{name:"prenom",label:"Prénom",required:true},{name:"email",label:"Email",type:"email",required:true},{name:"telephone",label:"Téléphone"},{name:"login",label:"Login",required:true},{name:"mot_de_passe",label:"Mot de passe",type:"password"},{name:"statut",label:"Statut"}]; return <CrudPage title="Utilisateurs" subtitle="Comptes utilisateurs de l'application" icon="👤" load={getUtilisateurs} create={d=>createUtilisateur({id_etablissement:Number(d.id_etablissement)||establishmentId(),...d,id_role:Number(d.id_role)})} update={(id,d)=>updateUtilisateur(id,{...d,id_role:d.id_role?Number(d.id_role):undefined})} remove={deleteUtilisateur} rowKey="id_utilisateur" initialForm={{id_etablissement:establishmentId(),id_role:"",nom:"",prenom:"",email:"",telephone:"",login:"",mot_de_passe:"",statut:"actif"}} fields={fields} searchKeys={["nom","prenom","email","login"]} columns={[{key:"id_utilisateur",label:"ID"},{key:"nom",label:"Nom"},{key:"prenom",label:"Prénom"},{key:"email",label:"Email"},{key:"login",label:"Login"},{key:"statut",label:"Statut"},{key:"id_role",label:"Rôle"}]}/> }
+import { useReferenceOptions } from "../../hooks/useReferenceOptions";
+import CrudPage from "../../components/common/CrudPage";
+import { establishmentId } from "../../services/apiClient";
+import { createUtilisateur, deleteUtilisateur, getRoles, getUtilisateurs, updateUtilisateur } from "../../services/administrationApi";
+import { optionsFrom } from "../pageUtils";
+
+const baseFields = [
+  { name: "nom", label: "Nom", required: true },
+  { name: "prenom", label: "Prénom", required: true },
+  { name: "email", label: "E-mail", type: "email", required: true },
+  { name: "telephone", label: "Téléphone" },
+  { name: "login", label: "Identifiant", required: true },
+  { name: "statut", label: "Statut", default: "actif", help: "L’authentification backend accepte notamment le statut actif." },
+];
+
+export default function Utilisateurs() {
+  const references = useReferenceOptions({ roles: getRoles }, "roles");
+  const roleOptions = optionsFrom(references.roles, "id_role", (role) => `${role.nom} (${role.code})`);
+  const idEtablissement = establishmentId();
+  const createFields = [
+    { name: "id_etablissement", label: "ID établissement", type: "number", required: true, default: idEtablissement || "", help: "Identifiant réel attendu par l’API." },
+    { name: "id_role", label: "Rôle", type: "select", required: true, options: roleOptions },
+    ...baseFields,
+    { name: "mot_de_passe", label: "Mot de passe", type: "password", required: true },
+  ];
+  const editFields = [
+    { name: "id_role", label: "Rôle", type: "select", required: true, options: roleOptions },
+    ...baseFields.filter((field) => !["login"].includes(field.name)).map((field) => ({ ...field, required: false })),
+  ];
+
+  return (
+    <CrudPage
+      title="Utilisateurs"
+      subtitle="Comptes utilisateurs et rôles de l’établissement."
+      icon="👥"
+      columns={[
+        { key: "nom", label: "Nom" },
+        { key: "prenom", label: "Prénom" },
+        { key: "login", label: "Identifiant" },
+        { key: "email", label: "E-mail" },
+        { key: "id_role", label: "ID rôle" },
+        { key: "statut", label: "Statut" },
+      ]}
+      createFields={createFields}
+      editFields={editFields}
+      initialForm={{ id_etablissement: idEtablissement || "", id_role: "", nom: "", prenom: "", email: "", telephone: "", login: "", statut: "actif", mot_de_passe: "" }}
+      load={getUtilisateurs}
+      pagination={{ pageSize: 100 }}
+      create={createUtilisateur}
+      update={updateUtilisateur}
+      remove={deleteUtilisateur}
+      rowKey="id_utilisateur"
+      createLabel="Nouvel utilisateur"
+      searchKeys={["nom", "prenom", "login", "email", "statut"]}
+      emptyText="Aucun utilisateur enregistré."
+    />
+  );
+}
