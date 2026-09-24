@@ -1,43 +1,8 @@
-const API_URL =
-  import.meta.env.VITE_API_URL ||
-  "http://localhost:8000/api/v1";
+import { apiGet, apiPost } from "./apiClient";
 
-const URL =
-  `${API_URL}/annees-scolaires`;
+export const getAnnees = () => apiGet("/annees-scolaires/");
+export const getAnnee = (id) => apiGet(`/annees-scolaires/${id}`);
+export const createAnnee = (data) => apiPost("/annees-scolaires/", data);
 
-async function handleResponse(response) {
-  if (response.ok) {
-    return await response.json();
-  }
-
-  let message =
-    `Erreur HTTP ${response.status}`;
-
-  try {
-    const data = await response.json();
-
-    if (typeof data?.detail === "string") {
-      message = data.detail;
-    }
-  } catch {
-    // Rien
-  }
-
-  throw new Error(message);
-}
-
-export async function getAnnees() {
-  const response =
-    await fetch(`${URL}/`);
-
-  return handleResponse(response);
-}
-
-export async function getAnnee(
-  idAnnee
-) {
-  const response =
-    await fetch(`${URL}/${idAnnee}`);
-
-  return handleResponse(response);
-}
+export const getPeriodes = ({ id_annee } = {}) => apiGet("/periodes/", { id_annee });
+export const createPeriode = (data) => apiPost("/periodes/", data);

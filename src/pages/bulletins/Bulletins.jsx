@@ -1,2 +1,40 @@
-import React,{useEffect,useState} from "react"; import CrudPage from "../../components/common/CrudPage"; import {getBulletins,createBulletin,updateBulletin} from "../../services/bulletinsApi"; import {getInscriptions} from "../../services/inscriptionsApi";
-export default function Bulletins(){const [ins,setIns]=useState([]); useEffect(()=>{getInscriptions().then(setIns).catch(()=>{})},[]); const fields=[{name:"id_inscription",label:"Inscription",type:"select",required:true,options:ins.map(x=>({value:x.id_inscription,label:`#${x.id_inscription} — classe ${x.id_classe}`}))},{name:"id_periode",label:"ID période",type:"number",required:true},{name:"moyenne_generale",label:"Moyenne générale",type:"number",step:"0.01",min:"0"},{name:"rang",label:"Rang",type:"number",min:"1"},{name:"appreciation",label:"Appréciation",type:"textarea",full:true},{name:"decision",label:"Décision"},{name:"valide",label:"Validé",type:"checkbox"},{name:"id_validateur",label:"ID validateur",type:"number"}]; return <CrudPage title="Bulletins" subtitle="Suivi et validation des bulletins" icon="📄" load={getBulletins} create={createBulletin} update={updateBulletin} canDelete={false} rowKey="id_bulletin" initialForm={{id_inscription:"",id_periode:"",moyenne_generale:"",rang:"",appreciation:"",decision:"",valide:false,id_validateur:""}} fields={fields} searchKeys={["id_inscription","id_periode","decision"]} columns={[{key:"id_bulletin",label:"ID"},{key:"id_inscription",label:"Inscription"},{key:"id_periode",label:"Période"},{key:"moyenne_generale",label:"Moyenne"},{key:"rang",label:"Rang"},{key:"decision",label:"Décision"},{key:"valide",label:"Validé",render:r=>r.valide?"Oui":"Non"}]}/> }
+import { useReferenceOptions } from "../../hooks/useReferenceOptions";
+import CrudPage from "../../components/common/CrudPage";
+import { getPeriodes } from "../../services/anneesApi";
+import { getInscriptions } from "../../services/inscriptionsApi";
+import { createBulletin, generateBulletinPdf, getBulletins, updateBulletin } from "../../services/bulletinsApi";
+import { formatDateTime, optionsFrom } from "../pageUtils";
+
+export default function Bulletins() {
+  const refs = useReferenceOptions({ inscriptions: getInscriptions, periodes: getPeriodes }, "bulletins");
+  const createFields = [
+    { name: "id_inscription", label: "Inscription", type: "select", required: true, options: optionsFrom(refs.inscriptions, "id_inscription", (row) => `Inscription #${row.id_inscription} — élève #${row.id_eleve}`) },
+    { name: "id_periode", label: "Période", type: "select", required: true, options: optionsFrom(refs.periodes, "id_periode", (row) => `${row.code} — ${row.libelle}`) },
+    { name: "moyenne_generale", label: "Moyenne générale", type: "number", min: 0, step: "0.01" },
+    { name: "rang", label: "Rang", type: "number", min: 1 },
+    { name: "appreciation", label: "Appréciation", type: "textarea", full: true },
+    { name: "decision", label: "Décision" },
+    { name: "valide", label: "Bulletin validé", type: "checkbox" },
+    { name: "id_validateur", label: "ID validateur", type: "number" },
+  ];
+  const editFields = createFields.filter((field) => !["id_inscription", "id_periode"].includes(field.name));
+  return (
+    <CrudPage
+      title="Bulletins"
+      subtitle="Bulletins par inscription et période, avec génération PDF disponible côté backend."
+      icon="📑"
+      columns={[{ key: "id_inscription", label: "Inscription" }, { key: "id_periode", label: "Période" }, { key: "moyenne_generale", label: "Moyenne" }, { key: "rang", label: "Rang" }, { key: "valide", label: "Validé", render: (row) => row.valide ? "Oui" : "Non" }, { key: "date_generation", label: "Généré le", render: (row) => formatDateTime(row.date_generation) }, { key: "pdf", label: "PDF", render: (row) => row.pdf ? "Disponible" : "—" }]}
+      createFields={createFields}
+      editFields={editFields}
+      initialForm={{ id_inscription: "", id_periode: "", moyenne_generale: "", rang: "", appreciation: "", decision: "", valide: false, id_validateur: "" }}
+      load={() => getBulletins()}
+      create={createBulletin}
+      update={updateBulletin}
+      extraActions={(row, { runAction, busy }) => <button type="button" disabled={busy} onClick={() => runAction(() => generateBulletinPdf(row.id_bulletin))}>📄 Générer PDF</button>}
+      rowKey="id_bulletin"
+      createLabel="Nouveau bulletin"
+      searchKeys={["id_inscription", "id_periode", "moyenne_generale", "decision"]}
+      emptyText="Aucun bulletin enregistré."
+    />
+  );
+}

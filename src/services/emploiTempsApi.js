@@ -1,1 +1,8 @@
-import { apiGet, apiPost, apiPut, apiDelete } from "./apiClient"; export const getEmplois=({id_classe,id_enseignant,id_annee}={})=>apiGet(`/emploi-temps/?${new URLSearchParams({...(id_classe?{id_classe}:{}),...(id_enseignant?{id_enseignant}:{}),...(id_annee?{id_annee}:{})})}`); export const createEmploi=d=>apiPost("/emploi-temps/",d); export const updateEmploi=(id,d)=>apiPut(`/emploi-temps/${id}`,d); export const deleteEmploi=id=>apiDelete(`/emploi-temps/${id}`);
+import { apiDelete, apiGet, apiPost, apiPut } from "./apiClient";
+
+export const getEmplois = ({ id_classe, id_enseignant, id_annee } = {}) =>
+  apiGet("/emploi-temps/", { id_classe, id_enseignant, id_annee });
+export const getEmploi = (id) => apiGet(`/emploi-temps/${id}`);
+export const createEmploi = (data) => apiPost("/emploi-temps/", data);
+export const updateEmploi = (id, data) => apiPut(`/emploi-temps/${id}`, data);
+export const deleteEmploi = (id) => apiDelete(`/emploi-temps/${id}`);

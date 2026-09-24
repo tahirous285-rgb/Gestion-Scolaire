@@ -1,1 +1,6 @@
-import { apiGet, apiPost, apiPut } from "./apiClient"; export const getPresencesEleves=(id_inscription)=>apiGet(`/presences-eleves/${id_inscription?`?id_inscription=${id_inscription}`:""}`); export const createPresenceEleve=d=>apiPost("/presences-eleves/",d); export const updatePresenceEleve=(id,d)=>apiPut(`/presences-eleves/${id}`,d);
+import { apiGet, apiPost, apiPut } from "./apiClient";
+
+export const getPresencesEleves = (id_inscription) =>
+  apiGet("/presences-eleves/", { id_inscription });
+export const createPresenceEleve = (data) => apiPost("/presences-eleves/", data);
+export const updatePresenceEleve = (id, data) => apiPut(`/presences-eleves/${id}`, data);

@@ -1,1 +1,11 @@
-import { apiGet, apiPost, apiPut } from "./apiClient"; export const getMois=()=>apiGet("/honoraires/mois"); export const createMois=d=>apiPost("/honoraires/mois",d); export const getHonoraires=({id_enseignant,id_annee}={})=>apiGet(`/honoraires/?${new URLSearchParams({...(id_enseignant?{id_enseignant}:{}),...(id_annee?{id_annee}:{})})}`); export const createHonoraire=d=>apiPost("/honoraires/",d); export const updateHonoraire=(id,d)=>apiPut(`/honoraires/${id}`,d); export const createPaiementHonoraire=d=>apiPost("/honoraires/paiements",d); export const getPaiementsHonoraire=id=>apiGet(`/honoraires/${id}/paiements`);
+import { apiGet, apiPost, apiPut } from "./apiClient";
+
+export const getMois = () => apiGet("/honoraires/mois");
+export const createMois = (data) => apiPost("/honoraires/mois", data);
+export const getHonoraires = ({ id_enseignant, id_annee } = {}) =>
+  apiGet("/honoraires/", { id_enseignant, id_annee });
+export const getHonoraire = (id) => apiGet(`/honoraires/${id}`);
+export const createHonoraire = (data) => apiPost("/honoraires/", data);
+export const updateHonoraire = (id, data) => apiPut(`/honoraires/${id}`, data);
+export const createPaiementHonoraire = (data) => apiPost("/honoraires/paiements", data);
+export const getPaiementsHonoraire = (id) => apiGet(`/honoraires/${id}/paiements`);

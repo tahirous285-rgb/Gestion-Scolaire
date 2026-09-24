@@ -1,141 +1,68 @@
-import {
-  Search,
-  Bell,
-  UserCircle,
-  Menu,
-} from "lucide-react";
+import { Bell, LogOut, Menu, UserCircle } from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "../../hooks/useAuth";
 
-import { useLocation } from "react-router-dom";
+const pageTitles = {
+  "/dashboard": "Tableau de bord",
+  "/eleves": "Élèves",
+  "/parents": "Parents",
+  "/inscriptions": "Inscriptions",
+  "/classes": "Classes",
+  "/matieres": "Matières",
+  "/annees-periodes": "Années & périodes",
+  "/enseignants": "Enseignants",
+  "/affectations": "Affectations",
+  "/evaluations": "Évaluations",
+  "/notes": "Notes",
+  "/presences-eleves": "Présences élèves",
+  "/bulletins": "Bulletins",
+  "/emploi-du-temps": "Emploi du temps",
+  "/cahier-maitre": "Présence enseignants",
+  "/cours-effectues": "Cours effectués",
+  "/observations-enseignants": "Observations enseignants",
+  "/honoraires": "Honoraires",
+  "/paiements-honoraires": "Paiements honoraires",
+  "/frais": "Frais scolaires",
+  "/paiements": "Paiements scolaires",
+  "/recus": "Reçus",
+  "/depenses": "Dépenses",
+  "/cartes": "Cartes scolaires",
+  "/annonces": "Annonces",
+  "/messages": "Messages",
+  "/notifications": "Notifications",
+  "/etablissements": "Établissements",
+  "/utilisateurs": "Utilisateurs",
+  "/roles-permissions": "Rôles & permissions",
+  "/journal-activite": "Journal d’activité",
+  "/parametres": "Paramètres",
+};
 
-function Navbar() {
+export default function Navbar({ onMenu }) {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { session, signOut } = useAuth();
+  const title = pageTitles[location.pathname] || "School Manager";
+  const displayName = [session?.prenom, session?.nom].filter(Boolean).join(" ") || "Utilisateur";
 
-  // Correspondance entre les routes et les titres
-  const pageTitles = {
-    "/dashboard": "Tableau de bord",
-
-    // Scolarité
-    "/eleves": "Élèves",
-    "/parents": "Parents",
-    "/inscriptions": "Inscriptions",
-    "/classes": "Classes",
-    "/matieres": "Matières",
-    "/annees-periodes": "Années & périodes",
-
-    // Enseignants
-    "/enseignants": "Enseignants",
-    "/affectations": "Affectations",
-
-    // Pédagogie
-    "/evaluations": "Évaluations",
-    "/notes": "Notes",
-    "/presences-eleves": "Présences élèves",
-    "/bulletins": "Bulletins",
-    "/emploi-du-temps": "Emploi du temps",
-
-    // Cahier des maîtres
-    "/cahier-maitre": "Présence enseignants",
-    "/cours-effectues": "Cours effectués",
-    "/observations-enseignants": "Observations enseignants",
-
-    // Honoraires
-    "/honoraires": "Honoraires",
-    "/paiements-honoraires": "Paiements honoraires",
-
-    // Finance
-    "/frais": "Frais scolaires",
-    "/paiements": "Paiements scolaires",
-    "/recus": "Reçus",
-    "/depenses": "Dépenses",
-
-    // Documents
-    "/cartes": "Cartes scolaires",
-
-    // Communication
-    "/annonces": "Annonces",
-    "/messages": "Messages",
-    "/notifications": "Notifications",
-
-    // Administration
-    "/etablissements": "Établissement",
-    "/utilisateurs": "Utilisateurs",
-    "/roles-permissions": "Rôles & permissions",
-    "/journal-activite": "Journal d'activité",
-    "/parametres": "Paramètres",
-  };
-
-  const pageTitle = pageTitles[location.pathname] || "School Manager";
+  function logout() {
+    signOut();
+    navigate("/login", { replace: true });
+  }
 
   return (
     <header className="navbar">
-
-      {/* =========================================
-          PARTIE GAUCHE
-          ========================================= */}
       <div className="navbar-left">
-
-        {/* Bouton menu */}
-        <button
-          className="menu-button"
-          type="button"
-          aria-label="Ouvrir le menu"
-        >
-          <Menu size={22} />
-        </button>
-
-        {/* Titre de la page */}
-        <div className="page-title">
-          <h1>{pageTitle}</h1>
-        </div>
-
-        {/* Recherche */}
-        <div className="search-box">
-          <Search size={18} />
-
-          <input
-            type="text"
-            placeholder="Rechercher..."
-          />
-        </div>
-
+        <button className="menu-button" type="button" onClick={onMenu} aria-label="Ouvrir le menu"><Menu size={21} /></button>
+        <div className="page-title"><span>ESPACE DE TRAVAIL</span><h1>{title}</h1></div>
       </div>
-
-
-      {/* =========================================
-          PARTIE DROITE
-          ========================================= */}
       <div className="navbar-right">
-
-        {/* Notifications */}
-        <button
-          className="icon-button"
-          type="button"
-          aria-label="Notifications"
-        >
-          <Bell size={20} />
-
-          <span className="notification-badge">
-            3
-          </span>
-        </button>
-
-
-        {/* Utilisateur */}
+        <button className="icon-button" type="button" onClick={() => navigate("/notifications")} aria-label="Notifications"><Bell size={19} /></button>
         <div className="user-profile">
-
           <UserCircle size={34} />
-
-          <div className="user-info">
-            <strong>Administrateur</strong>
-            <span>Administrateur</span>
-          </div>
-
+          <div className="user-info"><strong>{displayName}</strong><span>Connecté</span></div>
         </div>
-
+        <button className="logout-button" type="button" onClick={logout} title="Se déconnecter" aria-label="Se déconnecter"><LogOut size={18} /></button>
       </div>
-
     </header>
   );
 }
-
-export default Navbar;
