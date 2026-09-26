@@ -1,7 +1,7 @@
-import { apiDelete, apiGet, apiPost, apiPut } from "./apiClient";
+import { apiDelete, apiGet, apiPost, apiPut, onlyCurrentEstablishment } from "./apiClient";
 
 export const getEnseignants = ({ skip = 0, limit = 1000 } = {}) =>
-  apiGet("/enseignants/", { skip, limit });
+  apiGet("/enseignants/", { skip, limit }).then(onlyCurrentEstablishment);
 export const getEnseignant = (id) => apiGet(`/enseignants/${id}`);
 export const createEnseignant = (data) => apiPost("/enseignants/", data);
 export const updateEnseignant = (id, data) => apiPut(`/enseignants/${id}`, data);

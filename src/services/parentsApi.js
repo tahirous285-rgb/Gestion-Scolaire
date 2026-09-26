@@ -1,6 +1,6 @@
-import { apiDelete, apiGet, apiPost, apiPut } from "./apiClient";
+import { apiDelete, apiGet, apiPost, apiPut, onlyCurrentEstablishment } from "./apiClient";
 
-export const getParents = () => apiGet("/parents/");
+export const getParents = () => apiGet("/parents/", { skip: 0, limit: 1000 }).then(onlyCurrentEstablishment);
 export const getParent = (id) => apiGet(`/parents/${id}`);
 export const createParent = (data) => apiPost("/parents/", data);
 export const updateParent = (id, data) => apiPut(`/parents/${id}`, data);

@@ -1,5 +1,6 @@
 ﻿import { useEffect, useMemo, useState } from "react";
 
+import { establishmentId } from "../../services/apiClient";
 import {
   Search,
   Plus,
@@ -40,10 +41,7 @@ function Eleves() {
   // CONFIGURATION
   // =====================================================
 
-  const ETABLISSEMENT_ID =
-    Number(
-      import.meta.env.VITE_ETABLISSEMENT_ID
-    ) || 1;
+  const ETABLISSEMENT_ID = establishmentId();
 
   // =====================================================
   // ÉTATS ÉLÈVES

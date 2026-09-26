@@ -150,3 +150,12 @@ export function currentUser() {
     prenom: session.prenom || "",
   };
 }
+
+// Ne garde que les enregistrements de l'établissement de la session.
+// Les listes du backend (élèves, parents, classes, matières, enseignants)
+// renvoient tous les établissements confondus.
+export function onlyCurrentEstablishment(rows) {
+  const id = establishmentId();
+  if (!id || !Array.isArray(rows)) return rows;
+  return rows.filter((row) => row?.id_etablissement == null || Number(row.id_etablissement) === id);
+}
