@@ -1,6 +1,6 @@
 import { apiDelete, apiGet, apiPost, apiPut } from "./apiClient";
 
-export const getEleves = ({ skip = 0, limit = 100 } = {}) =>
+export const getEleves = ({ skip = 0, limit = 1000 } = {}) =>
   apiGet("/eleves/", { skip, limit });
 export const getEleve = (id) => apiGet(`/eleves/${id}`);
 export const createEleve = (data) => apiPost("/eleves/", data);

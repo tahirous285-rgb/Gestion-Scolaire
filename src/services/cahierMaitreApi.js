@@ -1,10 +1,9 @@
-import { apiGet, apiPost, apiPut } from "./apiClient";
-
-export const getPresencesEnseignants = (id_enseignant) =>
-  apiGet("/presences-enseignants/", { id_enseignant });
-export const createPresenceEnseignant = (data) => apiPost("/presences-enseignants/", data);
-export const updatePresenceEnseignant = (id, data) =>
-  apiPut(`/presences-enseignants/${id}`, data);
+import { apiGet, apiPost } from "./apiClient";
+export {
+  getPresencesEnseignants,
+  createPresenceEnseignant,
+  updatePresenceEnseignant,
+} from "./presencesEnseignantsApi";
 
 export const getCoursEffectues = ({ id_enseignant, id_classe } = {}) =>
   apiGet("/cours-effectues/", { id_enseignant, id_classe });
