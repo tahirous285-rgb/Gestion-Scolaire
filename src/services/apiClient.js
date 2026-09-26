@@ -138,3 +138,15 @@ export function authHeader() {
 
 // Alias conservé pour les modules qui utilisaient déjà apiFetch.
 export const apiFetch = apiRequest;
+
+// Informations de la session courante (utilisées par le tableau de bord).
+export function currentUser() {
+  const session = getSession() || {};
+  return {
+    id_utilisateur: userId(),
+    id_etablissement: establishmentId(),
+    id_role: Number(session.id_role) || null,
+    nom: session.nom || "",
+    prenom: session.prenom || "",
+  };
+}

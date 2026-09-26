@@ -67,3 +67,26 @@ Le modèle `Permission` existe, mais aucun routeur permissions n’est inclus da
 - Dashboard : `GET /dashboard/?id_etablissement=` avec `eleves`, `enseignants`, `classes`, `parents`, `presences_jour`, `finances` et `activites_recentes`.
 
 La pagination UI est activée uniquement pour les quatre routes qui déclarent réellement `skip`/`limit` (`etablissements`, `utilisateurs`, `eleves`, `enseignants`). Aucune recherche serveur ou filtre non déclaré dans ces routeurs n’est envoyé par le frontend ; la recherche des tables filtre seulement les lignes déjà chargées.
+
+## Pages détaillées (interface)
+
+Toutes les pages dont le backend est disponible disposent désormais d'une interface détaillée (et non plus d'un tableau CRUD générique). Les pages de la branche `frontend/tahirou` (élèves, parents, inscriptions, classes, matières, enseignants, affectations, évaluations, bulletins, emploi du temps, cahier des maîtres, années/périodes, tableau de bord) ont été restaurées et branchées sur l'authentification JWT. Les autres pages s'appuient sur la boîte à outils partagée `src/components/module/ModuleKit.jsx` :
+
+| Page | Fonctionnalités principales |
+| --- | --- |
+| Établissements | Cartes, détails, création/modification, activation/désactivation, suppression (sauf établissement de la session) |
+| Utilisateurs | Filtres établissement/rôle/statut, activer/désactiver/suspendre, création avec confirmation du mot de passe |
+| Rôles & permissions | Cartes par rôle avec nombre de membres et liste des membres ; permissions signalées comme non exposées par l'API |
+| Paramètres | Regroupement par préfixe, édition en ligne, paramètres suggérés |
+| Journal d'activité | Chronologie par jour, filtres module/utilisateur, limite configurable, détail avant/après |
+| Frais, paiements, reçus, dépenses | Statistiques, filtres, recouvrement, impression des reçus |
+| Honoraires, paiements des honoraires | Calcul, validation, paiements plafonnés au solde |
+| Notes | Saisie en grille d'une évaluation entière, rang, mention, statistiques |
+| Présences élèves | Appel par classe (P/A/R/E), historique et taux d'assiduité |
+| Cours effectués | Filtres, taux de réalisation, heures par enseignant, suggestions matières/classes |
+| Cartes scolaires | Cartes visuelles, génération unitaire ou par classe, QR, impression (comptabilisée via `reimprimer`) |
+| Annonces | Fil en ligne / brouillons / expirées, duplication (pas de modification côté API) |
+| Messagerie | Boîte de réception / envoyés, lecture marquée automatiquement, réponse avec citation |
+| Notifications | Marquer lu / tout lu, envoi à un utilisateur, un rôle ou tout l'établissement |
+
+Observations enseignants reste marquée « backend non disponible ».

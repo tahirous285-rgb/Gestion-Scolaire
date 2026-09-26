@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 
 function ParentForm({
@@ -11,17 +11,52 @@ function ParentForm({
   // ÉTAT DU FORMULAIRE
   // =====================================================
 
-  const [formData, setFormData] = useState(() => ({
-    nom: parentInitial?.nom || "",
-    prenom: parentInitial?.prenom || "",
-    telephone: parentInitial?.telephone || "",
-    telephone_secondaire: parentInitial?.telephone_secondaire || "",
-    email: parentInitial?.email || "",
-    adresse: parentInitial?.adresse || "",
-    profession: parentInitial?.profession || "",
-  }));
+  const [formData, setFormData] = useState({
+    nom: "",
+    prenom: "",
+    telephone: "",
+    telephone_secondaire: "",
+    email: "",
+    adresse: "",
+    profession: "",
+  });
 
   const [errors, setErrors] = useState({});
+
+  // =====================================================
+  // INITIALISATION EN MODE MODIFICATION
+  // =====================================================
+
+  useEffect(() => {
+    if (parentInitial) {
+      setFormData({
+        nom: parentInitial.nom || "",
+        prenom: parentInitial.prenom || "",
+        telephone:
+          parentInitial.telephone || "",
+        telephone_secondaire:
+          parentInitial.telephone_secondaire || "",
+        email:
+          parentInitial.email || "",
+        adresse:
+          parentInitial.adresse || "",
+        profession:
+          parentInitial.profession || "",
+      });
+    } else {
+      setFormData({
+        nom: "",
+        prenom: "",
+        telephone: "",
+        telephone_secondaire: "",
+        email: "",
+        adresse: "",
+        profession: "",
+      });
+    }
+
+    setErrors({});
+  }, [parentInitial]);
 
   // =====================================================
   // CHANGEMENT D'UN CHAMP

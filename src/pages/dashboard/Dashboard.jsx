@@ -1,25 +1,506 @@
-import { useEffect, useState } from "react";
-import { Activity, Banknote, BookOpen, GraduationCap, Users, Wallet, UserCheck, Clock3 } from "lucide-react";
-import { establishmentId } from "../../services/apiClient";
+import { useEffect, useState, useCallback } from "react";
+import {
+  GraduationCap,
+  Users,
+  School,
+  UserRound,
+  Wallet,
+  UserCheck,
+  UserX,
+  Clock3,
+  UserRoundCheck,
+  RefreshCw,
+  AlertTriangle,
+} from "lucide-react";
+
 import { getDashboard } from "../../services/dashboardApi";
-import { formatDateTime, formatMoney } from "../pageUtils";
+import { currentUser, establishmentId } from "../../services/apiClient";
 
-const emptyStats = { eleves: 0, enseignants: 0, classes: 0, parents: 0, presences_jour: { presents: 0, absents: 0, retards: 0, excuses: 0 }, finances: { recettes: 0, depenses: 0 }, activites_recentes: [] };
+import "./Dashboard.css";
 
-export default function Dashboard() {
-  const [stats, setStats] = useState(emptyStats);
+function Dashboard() {
+  const [dashboard, setDashboard] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
-  useEffect(() => {
-    let active = true;
-    getDashboard(establishmentId()).then((data) => { if (active) { const nextData = data || {}; setStats({ ...emptyStats, ...nextData, presences_jour: { ...emptyStats.presences_jour, ...(nextData.presences_jour || {}) }, finances: { ...emptyStats.finances, ...(nextData.finances || {}) } }); } }).catch((requestError) => { if (active) setError(requestError.message || "Dashboard indisponible."); }).finally(() => { if (active) setLoading(false); });
-    return () => { active = false; };
+
+  /**
+   * Charger le Dashboard
+   */
+  const chargerDashboard = useCallback(async (isRefresh = false) => {
+  try {
+    if (isRefresh) {
+      setRefreshing(true);
+    } else {
+      setLoading(true);
+    }
+
+    setError("");
+
+    const data = await getDashboard(establishmentId());
+    setDashboard(data);
+  } catch (err) {
+    console.error("Erreur Dashboard :", err);
+
+    setError(
+      err.message ||
+        "Impossible de récupérer les données du Dashboard."
+    );
+  } finally {
+    setLoading(false);
+    setRefreshing(false);
+  }
   }, []);
-  const cards = [
-    { label: "Élèves actifs", value: stats.eleves, hint: "inscrits dans l’établissement", icon: GraduationCap, tone: "blue" },
-    { label: "Enseignants actifs", value: stats.enseignants, hint: "membres de l’équipe", icon: Users, tone: "violet" },
-    { label: "Classes actives", value: stats.classes, hint: "groupes pédagogiques", icon: BookOpen, tone: "amber" },
-    { label: "Parents", value: stats.parents, hint: "contacts enregistrés", icon: UserCheck, tone: "green" },
+
+  /**
+   * Chargement initial
+   */
+  useEffect(() => {
+  chargerDashboard();
+
+  const handleFocus = () => {
+    chargerDashboard(true);
+  };
+
+  window.addEventListener("focus", handleFocus);
+
+  return () => {
+    window.removeEventListener("focus", handleFocus);
+  };
+}, [chargerDashboard]);
+
+  /**
+   * Actualisation manuelle
+   */
+  const handleRefresh = () => {
+    chargerDashboard(true);
+  };
+
+  /**
+   * Formatage des montants
+   */
+  const formatMontant = (montant) => {
+    return new Intl.NumberFormat("fr-FR", {
+      maximumFractionDigits: 0,
+    }).format(Number(montant || 0));
+  };
+
+  /**
+   * État de chargement
+   */
+  if (loading) {
+    return (
+      <div className="dashboard-state">
+        <div className="dashboard-loader">
+          <RefreshCw
+            size={30}
+            className="dashboard-spinner"
+          />
+        </div>
+
+        <h3>Chargement du Dashboard...</h3>
+
+        <p>
+          Récupération des statistiques de votre établissement.
+        </p>
+      </div>
+    );
+  }
+
+  /**
+   * Erreur
+   */
+  if (error) {
+    return (
+      <div className="dashboard-state dashboard-error">
+        <div className="dashboard-state-icon">
+          <AlertTriangle size={32} />
+        </div>
+
+        <h3>Impossible de charger le Dashboard</h3>
+
+        <p>{error}</p>
+
+        <button
+          type="button"
+          className="dashboard-refresh-btn"
+          onClick={() => chargerDashboard()}
+        >
+          <RefreshCw size={17} />
+          Réessayer
+        </button>
+      </div>
+    );
+  }
+
+  if (!dashboard) {
+    return null;
+  }
+
+  const stats = [
+    {
+      titre: "Élèves",
+      valeur: dashboard.eleves || 0,
+      description: "Élèves actifs",
+      icone: GraduationCap,
+    },
+    {
+      titre: "Enseignants",
+      valeur: dashboard.enseignants || 0,
+      description: "Enseignants actifs",
+      icone: Users,
+    },
+    {
+      titre: "Classes",
+      valeur: dashboard.classes || 0,
+      description: "Classes actives",
+      icone: School,
+    },
+    {
+      titre: "Parents",
+      valeur: dashboard.parents || 0,
+      description: "Parents enregistrés",
+      icone: UserRound,
+    },
   ];
-  return <div className="dashboard-page"><div className="dashboard-welcome"><div><div className="crud-eyebrow">Vue d’ensemble</div><h1>Bonjour, bienvenue 👋</h1><p>Les indicateurs réels de votre établissement, fournis par l’API.</p></div><div className="dashboard-date">Aujourd’hui<br /><strong>{new Date().toLocaleDateString("fr-FR", { dateStyle: "long" })}</strong></div></div>{error && <div className="crud-alert">⚠️ {error}</div>}<div className="dashboard-stats">{cards.map(({ label, value, hint, icon: Icon, tone }) => <div className={`stat-card ${tone}`} key={label}><div className="stat-icon"><Icon size={21} /></div><div><span>{label}</span><strong>{loading ? "—" : value}</strong><small>{hint}</small></div></div>)}</div><div className="dashboard-grid"><section className="dashboard-card"><div className="dashboard-card-head"><div><span className="crud-eyebrow">Présences élèves</span><h2>Aujourd’hui</h2></div><Activity size={20} /></div><div className="presence-list"><div className="presence-row"><span><i className="presence-dot present" />Présents</span><strong>{stats.presences_jour.presents}</strong></div><div className="presence-row"><span><i className="presence-dot absent" />Absents</span><strong>{stats.presences_jour.absents}</strong></div><div className="presence-row"><span><i className="presence-dot late" />Retards</span><strong>{stats.presences_jour.retards}</strong></div><div className="presence-row"><span><i className="presence-dot excuse" />Excusés</span><strong>{stats.presences_jour.excuses}</strong></div></div></section><section className="dashboard-card"><div className="dashboard-card-head"><div><span className="crud-eyebrow">Finance</span><h2>Flux enregistrés</h2></div><Banknote size={20} /></div><div className="finance-summary"><div><span><Wallet size={16} /> Recettes</span><strong>{formatMoney(stats.finances.recettes)}</strong></div><div><span><Wallet size={16} /> Dépenses</span><strong>{formatMoney(stats.finances.depenses)}</strong></div></div></section></div><section className="dashboard-card activity-card"><div className="dashboard-card-head"><div><span className="crud-eyebrow">Journal</span><h2>Activités récentes</h2></div><Activity size={20} /></div>{stats.activites_recentes.length === 0 ? <div className="empty-inline"><Clock3 size={18} /> Aucune activité renvoyée par l’API.</div> : <div className="activity-list">{stats.activites_recentes.map((activity) => <div className="activity-row" key={activity.id_journal}><span className="activity-marker" /><div><strong>{activity.action}</strong><span>{activity.module || "—"} · {formatDateTime(activity.date_action)}</span></div></div>)}</div>}</section></div>;
+
+  const presences = dashboard.presences_jour || {
+    presents: 0,
+    absents: 0,
+    retards: 0,
+    excuses: 0,
+  };
+
+  const finances = dashboard.finances || {
+    recettes: 0,
+    depenses: 0,
+  };
+
+  const activites = dashboard.activites_recentes || [];
+  const user = currentUser();
+  const nomUtilisateur = [user.prenom, user.nom].filter(Boolean).join(" ");
+
+  return (
+    <div className="dashboard">
+
+      {/* =====================================
+          EN-TÊTE
+      ====================================== */}
+
+      <div className="dashboard-header">
+        <div>
+          <span className="dashboard-eyebrow">
+            TABLEAU DE BORD
+          </span>
+
+          <h2>
+            Bonjour{nomUtilisateur ? `, ${nomUtilisateur}` : ""}
+          </h2>
+
+          <p>
+            Voici un aperçu de la situation actuelle
+            de votre établissement.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          className="dashboard-refresh-btn"
+          onClick={handleRefresh}
+          disabled={refreshing}
+        >
+          <RefreshCw
+            size={17}
+            className={
+              refreshing ? "dashboard-spinner" : ""
+            }
+          />
+
+          {refreshing ? "Actualisation..." : "Actualiser"}
+        </button>
+      </div>
+
+      {/* =====================================
+          STATISTIQUES PRINCIPALES
+      ====================================== */}
+
+      <div className="dashboard-stats">
+        {stats.map((stat) => {
+          const Icon = stat.icone;
+
+          return (
+            <div
+              className="stat-card"
+              key={stat.titre}
+            >
+              <div className="stat-icon">
+                <Icon size={25} />
+              </div>
+
+              <div className="stat-content">
+                <span>{stat.titre}</span>
+
+                <strong>
+                  {stat.valeur}
+                </strong>
+
+                <small>
+                  {stat.description}
+                </small>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* =====================================
+          CONTENU PRINCIPAL
+      ====================================== */}
+
+      <div className="dashboard-grid">
+
+        {/* ===================================
+            PRÉSENCES
+        ==================================== */}
+
+        <div className="dashboard-card">
+          <div className="card-header">
+            <div>
+              <h3>
+                Présences des élèves
+              </h3>
+
+              <p>
+                Situation d'aujourd'hui
+              </p>
+            </div>
+
+            <div className="card-header-icon">
+              <UserRoundCheck size={21} />
+            </div>
+          </div>
+
+          <div className="presence-list">
+
+            {/* Présents */}
+            <div className="presence-item">
+              <div className="presence-left">
+                <div className="presence-icon presence-success">
+                  <UserCheck size={20} />
+                </div>
+
+                <div>
+                  <span>Présents</span>
+
+                  <small>
+                    Élèves présents
+                  </small>
+                </div>
+              </div>
+
+              <strong>
+                {presences.presents || 0}
+              </strong>
+            </div>
+
+            {/* Absents */}
+            <div className="presence-item">
+              <div className="presence-left">
+                <div className="presence-icon presence-danger">
+                  <UserX size={20} />
+                </div>
+
+                <div>
+                  <span>Absents</span>
+
+                  <small>
+                    Élèves absents
+                  </small>
+                </div>
+              </div>
+
+              <strong>
+                {presences.absents || 0}
+              </strong>
+            </div>
+
+            {/* Retards */}
+            <div className="presence-item">
+              <div className="presence-left">
+                <div className="presence-icon presence-warning">
+                  <Clock3 size={20} />
+                </div>
+
+                <div>
+                  <span>Retards</span>
+
+                  <small>
+                    Élèves en retard
+                  </small>
+                </div>
+              </div>
+
+              <strong>
+                {presences.retards || 0}
+              </strong>
+            </div>
+
+            {/* Excusés */}
+            <div className="presence-item">
+              <div className="presence-left">
+                <div className="presence-icon presence-info">
+                  <UserRoundCheck size={20} />
+                </div>
+
+                <div>
+                  <span>Excusés</span>
+
+                  <small>
+                    Absences justifiées
+                  </small>
+                </div>
+              </div>
+
+              <strong>
+                {presences.excuses || 0}
+              </strong>
+            </div>
+
+          </div>
+        </div>
+
+        {/* ===================================
+            FINANCES
+        ==================================== */}
+
+        <div className="dashboard-card">
+          <div className="card-header">
+            <div>
+              <h3>
+                Situation financière
+              </h3>
+
+              <p>
+                Données enregistrées
+              </p>
+            </div>
+
+            <div className="card-header-icon">
+              <Wallet size={21} />
+            </div>
+          </div>
+
+          <div className="finance-list">
+
+            {/* Recettes */}
+            <div className="finance-item">
+              <div>
+                <span className="finance-label">
+                  Recettes
+                </span>
+
+                <small>
+                  Paiements validés
+                </small>
+              </div>
+
+              <strong>
+                {formatMontant(finances.recettes)}
+                <span> FCFA</span>
+              </strong>
+            </div>
+
+            {/* Dépenses */}
+            <div className="finance-item">
+              <div>
+                <span className="finance-label">
+                  Dépenses
+                </span>
+
+                <small>
+                  Dépenses enregistrées
+                </small>
+              </div>
+
+              <strong>
+                {formatMontant(finances.depenses)}
+                <span> FCFA</span>
+              </strong>
+            </div>
+
+            {/* Solde calculé côté frontend */}
+            <div className="finance-total">
+              <div>
+                <span>
+                  Solde
+                </span>
+
+                <small>
+                  Recettes - dépenses
+                </small>
+              </div>
+
+              <strong>
+                {formatMontant(
+                  Number(finances.recettes || 0) -
+                  Number(finances.depenses || 0)
+                )}
+                <span> FCFA</span>
+              </strong>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+      {/* =====================================
+          ACTIVITÉS
+      ====================================== */}
+
+      <div className="dashboard-card dashboard-info-card">
+
+        <div className="card-header">
+          <div>
+            <h3>
+              Activités récentes
+            </h3>
+
+              <p>Dernières actions enregistrées</p>
+          </div>
+
+          <div className="card-header-icon">
+            <RefreshCw size={21} />
+          </div>
+        </div>
+
+        <div className="dashboard-info-content">
+          {activites.length > 0 ? (
+            <div className="activity-list">
+              {activites.map((activite) => (
+                <div className="activity-item" key={activite.id_journal}>
+                  <div>
+                    <strong>{activite.action}</strong>
+                    <span>{activite.module}</span>
+                  </div>
+                  <time dateTime={activite.date_action}>
+                    {new Intl.DateTimeFormat("fr-FR", {
+                      dateStyle: "short",
+                      timeStyle: "short",
+                    }).format(new Date(activite.date_action))}
+                  </time>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p>Aucune activité récente pour cet établissement.</p>
+          )}
+        </div>
+
+      </div>
+
+    </div>
+  );
 }
+
+export default Dashboard;

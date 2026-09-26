@@ -1,0 +1,13 @@
+.annonce-feed { display: flex; flex-direction: column; gap: 14px; max-width: 860px; }
+.annonce-card { background: #fff; border: 1px solid #e5e7eb; border-left: 4px solid #16a34a; border-radius: 14px; padding: 18px 20px; box-shadow: 0 4px 14px rgba(15, 23, 42, .04); }
+.annonce-card.etat-brouillon { border-left-color: #9ca3af; background: #fcfcfd; }
+.annonce-card.etat-expiree { border-left-color: #dc2626; opacity: .85; }
+.annonce-card header { display: flex; align-items: center; gap: 10px; }
+.annonce-author { flex: 1; min-width: 0; }
+.annonce-author strong { display: block; font-size: 13.5px; color: #111827; }
+.annonce-author small { color: #6b7280; font-size: 12px; }
+.annonce-card h3 { margin: 14px 0 6px; font-size: 17px; color: #0f172a; }
+.annonce-card p { margin: 0; white-space: pre-wrap; color: #374151; line-height: 1.55; font-size: 14px; }
+.annonce-card p.clamped { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+.annonce-more { border: 0; background: none; padding: 6px 0 0; color: #2563eb; font-weight: 600; cursor: pointer; font-size: 13px; }
+.annonce-card footer { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 14px; padding-top: 12px; border-top: 1px solid #f1f5f9; font-size: 12.5px; }

@@ -1,7 +1,10 @@
 import { apiGet, apiPost, apiPut } from "./apiClient";
 
-export const getBulletins = ({ id_inscription, id_periode } = {}) =>
-  apiGet("/bulletins/", { id_inscription, id_periode });
+export const getBulletins = ({ id_inscription, id_periode, idInscription, idPeriode } = {}) =>
+  apiGet("/bulletins/", {
+    id_inscription: id_inscription ?? idInscription,
+    id_periode: id_periode ?? idPeriode,
+  });
 export const getBulletin = (id) => apiGet(`/bulletins/${id}`);
 export const createBulletin = (data) => apiPost("/bulletins/", data);
 export const updateBulletin = (id, data) => apiPut(`/bulletins/${id}`, data);
