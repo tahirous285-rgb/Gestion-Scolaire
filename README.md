@@ -34,11 +34,25 @@ La page `/login` envoie `id_etablissement`, `login` et `mot_de_passe` à `POST /
 Le frontend n’invente pas de route pour les fonctionnalités absentes de l’API actuelle. L’interface les signale explicitement avec `BACKEND NON DISPONIBLE` :
 
 - permissions et association rôle–permission ;
-- observations des enseignants ;
 - association classe–matière (`ClasseMatiere`) ;
 - liste globale des reçus (la recherche par paiement reste disponible).
 
-Le dossier `backend/` du checkout est un gitlink non initialisé ; l’alignement a été réalisé à partir du dépôt backend fourni et de ses routeurs/schemas réellement exposés. Aucun fichier backend n’a été modifié.
+## Backend
+
+`backend/` contient l’API FastAPI réellement utilisée par le frontend : dépôt [`Hamdate/Projet-Ecole`](https://github.com/Hamdate/Projet-Ecole), branche `main`, commit `fb43063` (« Ajout du module Observations enseignants », 28/09/2026). Les fichiers sont versionnés ici directement afin que le checkout reste complet — auparavant `backend/` n’était qu’un gitlink non initialisé, donc un dossier vide. Aucun fichier backend n’est modifié par le frontend.
+
+Depuis cette version, le backend exige un JWT sur toutes les routes sauf `POST /auth/login` (`HTTPBearer` + `get_current_user`), ce que `apiClient.js` fait déjà, et renvoie `400` sur un doublon enseignant–matière ou enseignant–classe.
+
+Démarrer l’API en local (Python 3.11+, dépendances épinglées dans `backend/requirements.txt`) :
+
+```bash
+cd backend
+python -m venv venv && source venv/bin/activate
+pip install -r requirements.txt
+uvicorn app.main:app --reload --port 8000
+```
+
+`bcrypt` doit rester en `4.0.1` comme épinglé : `passlib 1.7.4` échoue avec `bcrypt >= 4.1` (hachage et vérification des mots de passe en erreur).
 
 ## Vérifications
 
