@@ -1,6 +1,8 @@
 # Matrice backend utilisée par le frontend
 
-Source consultée : `app/api/v1/api.py`, les routeurs `app/api/v1/endpoints/`, les schemas et modèles du dépôt backend fourni. Les suffixes `/` ci-dessous sont ceux déclarés par FastAPI.
+Source consultée : `backend/` (dépôt `Hamdate/Projet-Ecole`, `main` @ `fb43063`) — `app/api/v1/api.py`, les routeurs `app/api/v1/endpoints/`, les schemas et modèles. Les suffixes `/` ci-dessous sont ceux déclarés par FastAPI.
+
+Depuis cette version, toutes les routes ci-dessous exigent `Authorization: Bearer <token>` (seul `POST /auth/login` est public) : la dépendance `get_current_user` est appliquée globalement dans `api_router`.
 
 ## Administration
 
@@ -32,7 +34,7 @@ Le modèle `Permission` existe, mais aucun routeur permissions n’est inclus da
 | Module | Routes utilisées | Capacités |
 | --- | --- | --- |
 | Enseignants | `GET/POST /enseignants/`, `GET/PUT/DELETE /enseignants/{id}` | CRUD sur les champs du schema enseignant |
-| Affectations | `POST /enseignants/matieres`, `GET /enseignants/{id}/matieres`, `POST /enseignants/classes`, `GET /enseignants/{id}/classes` | Création et lecture par enseignant ; aucune suppression inventée |
+| Affectations | `POST /enseignants/matieres`, `GET /enseignants/{id}/matieres`, `POST /enseignants/classes`, `GET /enseignants/{id}/classes` | Création et lecture par enseignant ; aucune suppression inventée. Le backend rejette désormais un doublon avec `400` et un message métier (« Cet enseignant est déjà associé à cette matière » / « … à cette classe pour cette année »), affiché tel quel par l’UI |
 | Évaluations | `GET /evaluations/`, `GET /evaluations/{id}`, `POST /evaluations/` | Liste + création |
 | Notes | `GET/POST /notes/`, `GET/PUT/DELETE /notes/{id}` | CRUD ; le backend valide le barème et les doublons |
 | Présences élèves | `GET/POST /presences-eleves/`, `PUT /presences-eleves/{id}` | Création + liste + modification ; statuts documentés par le modèle : `PRESENT`, `ABSENT`, `RETARD`, `EXCUSE` |
@@ -43,7 +45,7 @@ Le modèle `Permission` existe, mais aucun routeur permissions n’est inclus da
 
 - Présences enseignants : `GET/POST /presences-enseignants/`, `PUT /presences-enseignants/{id}`. Les statuts proposés correspondent au commentaire du modèle : `PRESENT`, `ABSENT`, `RETARD`, `PERMISSION`, `MISSION`, `CONGE`, `AUTRE`.
 - Cours effectués : `GET/POST /cours-effectues/`.
-- Observations enseignants : le modèle et les schemas sont présents, mais aucun endpoint n’est enregistré ; l’écran affiche `BACKEND NON DISPONIBLE`.
+- Observations enseignants : `GET /observations-enseignants/?id_enseignant=`, `POST /observations-enseignants/`. Champs : `id_enseignant`, `id_auteur` (non modifiable, rempli avec l’utilisateur connecté), `date_observation` (optionnelle), `contenu` (obligatoire), `confidentialite` (texte libre, défaut `interne`). Aucun `PUT`/`DELETE` n’est déclaré : la page reste en liste + création.
 
 ## Honoraires, finance et documents
 

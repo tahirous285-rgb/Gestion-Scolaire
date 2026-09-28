@@ -22,3 +22,12 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Backend Python (dossier backend/ versionné avec le frontend)
+__pycache__/
+*.py[cod]
+venv/
+.env
+storage/
+*.db
+*.sqlite3
