@@ -12,7 +12,7 @@ import { escapeHtml, formatFrDate, printHtml } from "./printDocument";
 function photoSrc(photo) {
   if (!photo) return "";
   const value = String(photo).trim();
-  if (/^https?:\/\//i.test(value) || value.startsWith("data:")) return value;
+  if (/^https?:\/\//i.test(value) || value.startsWith("data:") || value.startsWith("/storage/")) return value;
   return "";
 }
 

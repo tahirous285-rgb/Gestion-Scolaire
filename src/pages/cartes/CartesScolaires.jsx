@@ -7,9 +7,10 @@ import { getEleves } from "../../services/elevesApi";
 import { getInscriptions } from "../../services/inscriptionsApi";
 import { formatDateTime, formatDate, mapBy, optionsFrom } from "../pageUtils";
 import { printCarteScolaire } from "../../utils/printBulletinsCartes";
+import { photoUrl } from "../../utils/imageFile";
 
 function ElevePhoto({ eleve }) {
-  const src = eleve?.photo && /^(https?:|data:)/i.test(String(eleve.photo)) ? eleve.photo : "";
+  const src = photoUrl(eleve?.photo);
   if (!src) {
     return <span style={{ color: "#9ca3af" }}>—</span>;
   }

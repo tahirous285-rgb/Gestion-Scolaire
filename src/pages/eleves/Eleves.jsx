@@ -1,6 +1,7 @@
 import CrudPage from "../../components/common/CrudPage";
 import { establishmentId } from "../../services/apiClient";
 import { createEleve, deleteEleve, getEleves, updateEleve } from "../../services/elevesApi";
+import { photoUrl } from "../../utils/imageFile";
 import { formatDate } from "../pageUtils";
 
 const fields = [
@@ -14,7 +15,7 @@ const fields = [
   { name: "adresse", label: "Adresse", full: true },
   { name: "telephone", label: "Téléphone" },
   { name: "email", label: "E-mail", type: "email" },
-  { name: "photo", label: "Photo (URL https)", help: "Collez une URL d’image. Elle s’affichera sur la carte scolaire et le bulletin imprimés." },
+  { name: "photo", label: "Photo de l’élève", type: "image", full: true, help: "Importer depuis l’explorateur de fichiers. La photo est enregistrée dans le dossier et reste dans l’application (cartes et bulletins)." },
   { name: "actif", label: "Élève actif", type: "checkbox", default: true },
 ];
 
@@ -27,8 +28,8 @@ export default function Eleves() {
       icon="🎓"
       columns={[
         { key: "photo", label: "Photo", render: (row) => (
-          row.photo && /^(https?:|data:)/i.test(String(row.photo))
-            ? <img src={row.photo} alt="" width={36} height={36} style={{ width: 36, height: 36, objectFit: "cover", borderRadius: 8 }} />
+          photoUrl(row.photo)
+            ? <img src={photoUrl(row.photo)} alt="" width={36} height={36} style={{ width: 36, height: 36, objectFit: "cover", borderRadius: 8 }} />
             : "—"
         ) },
         { key: "matricule", label: "Matricule" },
