@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { fileToStoredPhoto } from "../../utils/imageFile";
 import "./CrudPage.css";
 
 function valueFor(row, key) {
@@ -72,6 +73,33 @@ function Field({ field, value, onChange, disabled }) {
                 </option>
               ))}
             </select>
+          ) : field.type === "image" ? (
+            <div className="crud-image-field">
+              {value ? (
+                <img src={value} alt="Aperçu" className="crud-image-preview" />
+              ) : (
+                <div className="crud-image-placeholder">Aucune photo</div>
+              )}
+              <div className="crud-image-actions">
+                <input
+                  id={field.name}
+                  name={field.name}
+                  type="file"
+                  accept="image/*"
+                  disabled={disabled || field.disabled}
+                  onChange={onChange}
+                />
+                {value ? (
+                  <button
+                    type="button"
+                    className="crud-secondary"
+                    onClick={() => onChange({ target: { name: field.name, value: "", type: "text" } })}
+                  >
+                    Retirer
+                  </button>
+                ) : null}
+              </div>
+            </div>
           ) : (
             <input
               {...common}
@@ -205,8 +233,21 @@ export default function CrudPage({
     }
   }
 
-  function change(event) {
-    const { name, value, type, checked } = event.target;
+  async function change(event) {
+    const { name, value, type, checked, files } = event.target;
+    if (type === "file") {
+      const file = files?.[0];
+      if (!file) return;
+      try {
+        setError("");
+        const stored = await fileToStoredPhoto(file);
+        setForm((current) => ({ ...current, [name]: stored }));
+      } catch (readError) {
+        setError(readError.message || "Import de la photo impossible.");
+      }
+      event.target.value = "";
+      return;
+    }
     setForm((current) => ({
       ...current,
       [name]: type === "checkbox" ? checked : value,

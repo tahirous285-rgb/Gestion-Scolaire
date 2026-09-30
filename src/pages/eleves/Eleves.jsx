@@ -1,6 +1,7 @@
 import CrudPage from "../../components/common/CrudPage";
 import { establishmentId } from "../../services/apiClient";
 import { createEleve, deleteEleve, getEleves, updateEleve } from "../../services/elevesApi";
+import { photoUrl } from "../../utils/imageFile";
 import { formatDate } from "../pageUtils";
 
 const fields = [
@@ -14,7 +15,7 @@ const fields = [
   { name: "adresse", label: "Adresse", full: true },
   { name: "telephone", label: "Téléphone" },
   { name: "email", label: "E-mail", type: "email" },
-  { name: "photo", label: "Photo (URL)" },
+  { name: "photo", label: "Photo de l’élève", type: "image", full: true, help: "Importer depuis l’explorateur de fichiers. La photo est enregistrée dans le dossier et reste dans l’application (cartes et bulletins)." },
   { name: "actif", label: "Élève actif", type: "checkbox", default: true },
 ];
 
@@ -26,6 +27,11 @@ export default function Eleves() {
       subtitle="Dossier administratif des élèves de l’établissement connecté."
       icon="🎓"
       columns={[
+        { key: "photo", label: "Photo", render: (row) => (
+          photoUrl(row.photo)
+            ? <img src={photoUrl(row.photo)} alt="" width={36} height={36} style={{ width: 36, height: 36, objectFit: "cover", borderRadius: 8 }} />
+            : "—"
+        ) },
         { key: "matricule", label: "Matricule" },
         { key: "nom", label: "Nom" },
         { key: "prenom", label: "Prénom" },
