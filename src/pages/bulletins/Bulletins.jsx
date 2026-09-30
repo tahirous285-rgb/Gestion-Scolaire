@@ -4,6 +4,7 @@ import { getPeriodes } from "../../services/anneesApi";
 import { getInscriptions } from "../../services/inscriptionsApi";
 import { createBulletin, generateBulletinPdf, getBulletins, updateBulletin } from "../../services/bulletinsApi";
 import { formatDateTime, optionsFrom } from "../pageUtils";
+import { printBulletin } from "../../utils/printBulletinsCartes";
 
 export default function Bulletins() {
   const refs = useReferenceOptions({ inscriptions: getInscriptions, periodes: getPeriodes }, "bulletins");
@@ -21,7 +22,7 @@ export default function Bulletins() {
   return (
     <CrudPage
       title="Bulletins"
-      subtitle="Bulletins par inscription et période, avec génération PDF disponible côté backend."
+      subtitle="Bulletins par inscription et période. Imprimez ou enregistrez en PDF (photo élève incluse)."
       icon="📑"
       columns={[{ key: "id_inscription", label: "Inscription" }, { key: "id_periode", label: "Période" }, { key: "moyenne_generale", label: "Moyenne" }, { key: "rang", label: "Rang" }, { key: "valide", label: "Validé", render: (row) => row.valide ? "Oui" : "Non" }, { key: "date_generation", label: "Généré le", render: (row) => formatDateTime(row.date_generation) }, { key: "pdf", label: "PDF", render: (row) => row.pdf ? "Disponible" : "—" }]}
       createFields={createFields}
@@ -30,7 +31,12 @@ export default function Bulletins() {
       load={() => getBulletins()}
       create={createBulletin}
       update={updateBulletin}
-      extraActions={(row, { runAction, busy }) => <button type="button" disabled={busy} onClick={() => runAction(() => generateBulletinPdf(row.id_bulletin))}>📄 Générer PDF</button>}
+      extraActions={(row, { runAction, busy }) => (
+        <>
+          <button type="button" disabled={busy} onClick={() => runAction(() => printBulletin(row))}>🖨 Imprimer / PDF</button>
+          <button type="button" disabled={busy} onClick={() => runAction(() => generateBulletinPdf(row.id_bulletin))}>📄 Générer PDF serveur</button>
+        </>
+      )}
       rowKey="id_bulletin"
       createLabel="Nouveau bulletin"
       searchKeys={["id_inscription", "id_periode", "moyenne_generale", "decision"]}

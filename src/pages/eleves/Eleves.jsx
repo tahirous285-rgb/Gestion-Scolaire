@@ -14,7 +14,7 @@ const fields = [
   { name: "adresse", label: "Adresse", full: true },
   { name: "telephone", label: "Téléphone" },
   { name: "email", label: "E-mail", type: "email" },
-  { name: "photo", label: "Photo (URL)" },
+  { name: "photo", label: "Photo (URL https)", help: "Collez une URL d’image. Elle s’affichera sur la carte scolaire et le bulletin imprimés." },
   { name: "actif", label: "Élève actif", type: "checkbox", default: true },
 ];
 
@@ -26,6 +26,11 @@ export default function Eleves() {
       subtitle="Dossier administratif des élèves de l’établissement connecté."
       icon="🎓"
       columns={[
+        { key: "photo", label: "Photo", render: (row) => (
+          row.photo && /^(https?:|data:)/i.test(String(row.photo))
+            ? <img src={row.photo} alt="" width={36} height={36} style={{ width: 36, height: 36, objectFit: "cover", borderRadius: 8 }} />
+            : "—"
+        ) },
         { key: "matricule", label: "Matricule" },
         { key: "nom", label: "Nom" },
         { key: "prenom", label: "Prénom" },
