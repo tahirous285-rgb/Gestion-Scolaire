@@ -21,14 +21,14 @@ export default function Inscriptions() {
     { name: "redoublant", label: "Redoublant", type: "checkbox" },
     { name: "observation", label: "Observation", type: "textarea", full: true },
   ];
-  const editFields = createFields.filter((field) => !["id_eleve", "id_annee", "date_inscription"].includes(field.name)).map((field) => ({ ...field, required: false }));
+  const editFields = createFields.filter((field) => !["id_eleve", "id_annee", "date_inscription"].includes(field.name));
   return (
-    <CrudPage
+    <CrudPage referenceError={references.error}
       title="Inscriptions"
       subtitle="Affectation d’un élève à une année et une classe."
       icon="📝"
       columns={[
-        { key: "id_eleve", label: "ID élève" }, { key: "id_annee", label: "ID année" }, { key: "id_classe", label: "ID classe" },
+        { key: "id_eleve", label: "Élève" }, { key: "id_annee", label: "Année" }, { key: "id_classe", label: "Classe" },
         { key: "numero_inscription", label: "N° inscription" }, { key: "date_inscription", label: "Date", render: (row) => formatDate(row.date_inscription) },
         { key: "statut", label: "Statut" }, { key: "redoublant", label: "Redoublant", render: (row) => row.redoublant ? "Oui" : "Non" },
       ]}

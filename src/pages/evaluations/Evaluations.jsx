@@ -12,7 +12,7 @@ export default function Evaluations() {
   const refs = useReferenceOptions({ annees: getAnnees, periodes: getPeriodes, classes: getClasses, matieres: getMatieres, enseignants: getEnseignants }, "evaluations");
   const fields = [
     { name: "id_annee", label: "Année scolaire", type: "select", required: true, options: optionsFrom(refs.annees, "id_annee", "libelle") },
-    { name: "id_periode", label: "Période", type: "select", required: true, options: optionsFrom(refs.periodes, "id_periode", (row) => `${row.code} — ${row.libelle}`) },
+    { name: "id_periode", label: "Période", type: "select", required: true, options: optionsFrom(refs.periodes, "id_periode", (row) => `${row.code} — ${row.libelle}`), dependsOn: ["id_annee"], optionsFor: (form) => optionsFrom(refs.periodes?.filter((period) => String(period.id_annee) === String(form.id_annee)), "id_periode", "libelle") },
     { name: "id_classe", label: "Classe", type: "select", required: true, options: optionsFrom(refs.classes, "id_classe", "nom") },
     { name: "id_matiere", label: "Matière", type: "select", required: true, options: optionsFrom(refs.matieres, "id_matiere", (row) => `${row.code} — ${row.nom}`) },
     { name: "id_enseignant", label: "Enseignant", type: "select", required: true, options: optionsFrom(refs.enseignants, "id_enseignant", (row) => `${row.matricule} — ${row.nom} ${row.prenom}`) },
@@ -24,7 +24,7 @@ export default function Evaluations() {
     { name: "observation", label: "Observation", type: "textarea", full: true },
   ];
   return (
-    <CrudPage
+    <CrudPage referenceError={refs.error}
       title="Évaluations"
       subtitle="Évaluations rattachées à une année, une période, une classe et une matière."
       icon="📄"

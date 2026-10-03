@@ -8,17 +8,17 @@ import { formatDateTime, optionsFrom } from "../pageUtils";
 export default function Notes() {
   const refs = useReferenceOptions({ evaluations: getEvaluations, inscriptions: getInscriptions }, "notes");
   const evaluationOptions = optionsFrom(refs.evaluations, "id_evaluation", (row) => `${row.libelle} (#${row.id_evaluation})`);
-  const inscriptionOptions = optionsFrom(refs.inscriptions, "id_inscription", (row) => `Inscription #${row.id_inscription} — élève #${row.id_eleve}`);
+  const inscriptionOptions = optionsFrom(refs.inscriptions, "id_inscription", (row) => row.label);
   const createFields = [
     { name: "id_evaluation", label: "Évaluation", type: "select", required: true, options: evaluationOptions },
-    { name: "id_inscription", label: "Inscription", type: "select", required: true, options: inscriptionOptions },
+    { name: "id_inscription", label: "Inscription", type: "select", required: true, options: inscriptionOptions, dependsOn: ["id_evaluation"], optionsFor: (form) => { const evaluation = refs.evaluations?.find((item) => String(item.id_evaluation) === String(form.id_evaluation)); return optionsFrom(refs.inscriptions?.filter((item) => item.id_classe === evaluation?.id_classe && item.id_annee === evaluation?.id_annee), "id_inscription", "label"); } },
     { name: "valeur", label: "Valeur", type: "number", min: 0, step: "0.01", help: "Le backend vérifie la valeur par rapport au barème de l’évaluation." },
     { name: "absence", label: "Absent", type: "checkbox" },
     { name: "observation", label: "Observation", type: "textarea", full: true },
   ];
   const editFields = createFields.filter((field) => !["id_evaluation", "id_inscription"].includes(field.name));
   return (
-    <CrudPage
+    <CrudPage referenceError={refs.error}
       title="Notes"
       subtitle="Une note par élève et par évaluation, avec contrôle du barème côté backend."
       icon="✅"

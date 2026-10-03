@@ -28,7 +28,7 @@ export default function ObservationsEnseignants() {
     { name: "contenu", label: "Contenu", type: "textarea", required: true, full: true, rows: 5 },
   ];
   return (
-    <CrudPage
+    <CrudPage referenceError={refs.error}
       title="Observations enseignants"
       subtitle="Suivi des observations individuelles consignées dans le cahier des maîtres."
       icon="🗒️"

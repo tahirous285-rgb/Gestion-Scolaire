@@ -12,7 +12,7 @@ export default function RolesPermissions() {
   return (
     <>
       <CrudPage
-        title="Rôles & permissions"
+        title="Rôles disponibles"
         subtitle="Les rôles exposés par l’API."
         icon="🛡️"
         columns={[

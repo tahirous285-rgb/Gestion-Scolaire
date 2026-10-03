@@ -15,7 +15,7 @@ const fields = [
   { name: "adresse", label: "Adresse", full: true },
   { name: "telephone", label: "Téléphone" },
   { name: "email", label: "E-mail", type: "email" },
-  { name: "photo", label: "Photo de l’élève", type: "image", full: true, help: "Importer depuis l’explorateur de fichiers. La photo est enregistrée dans le dossier et reste dans l’application (cartes et bulletins)." },
+  { name: "photo", label: "Photo de l’élève", type: "image", full: true, help: "Importer depuis l’explorateur de fichiers. La photo est conservée dans le champ photo et réutilisée pour les cartes et les bulletins imprimés." },
   { name: "actif", label: "Élève actif", type: "checkbox", default: true },
 ];
 
@@ -41,7 +41,7 @@ export default function Eleves() {
         { key: "actif", label: "Statut", render: (row) => row.actif ? "Actif" : "Inactif" },
       ]}
       createFields={fields}
-      editFields={fields.map((field) => ({ ...field, required: false }))}
+      editFields={fields}
       initialForm={{ id_etablissement: idEtablissement || "", matricule: "", nom: "", prenom: "", sexe: "", date_naissance: "", lieu_naissance: "", nationalite: "", adresse: "", telephone: "", email: "", photo: "", actif: true }}
       load={getEleves}
       pagination={{ pageSize: 100 }}

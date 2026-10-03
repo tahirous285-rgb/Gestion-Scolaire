@@ -3,7 +3,7 @@ const JPEG_QUALITY = 0.72;
 
 export function isDisplayablePhoto(value) {
   if (!value) return false;
-  return /^(https?:|data:|\/storage\/)/i.test(String(value).trim());
+  return /^(https?:\/\/|data:image\/(?:jpeg|png|webp|gif);base64,|\/storage\/)/i.test(String(value).trim());
 }
 
 export function photoUrl(value) {
@@ -12,10 +12,10 @@ export function photoUrl(value) {
 }
 
 /** Lit un fichier image de l’explorateur, le redimensionne et le convertit
- *  en data URL JPEG. La valeur est enregistrée dans le dossier élève. */
+ *  en data URL JPEG, stockée comme chaîne dans le champ photo. */
 export function fileToStoredPhoto(file) {
   return new Promise((resolve, reject) => {
-    if (!file || !file.type.startsWith("image/")) {
+    if (!file || !["image/jpeg", "image/png", "image/webp", "image/gif"].includes(file.type)) {
       reject(new Error("Choisissez un fichier image (JPG, PNG, WebP…)."));
       return;
     }
@@ -35,6 +35,7 @@ export function fileToStoredPhoto(file) {
         canvas.width = width;
         canvas.height = height;
         const context = canvas.getContext("2d");
+        if (!context) { reject(new Error("Conversion image indisponible.")); return; }
         context.fillStyle = "#ffffff";
         context.fillRect(0, 0, width, height);
         context.drawImage(image, 0, 0, width, height);

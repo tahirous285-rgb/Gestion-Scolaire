@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import CrudPage from "../../components/common/CrudPage";
 import { establishmentId } from "../../services/apiClient";
 import { createParent, deleteParent, getParents, linkParentToEleve, updateParent } from "../../services/parentsApi";
@@ -16,6 +16,7 @@ const fields = [
 ];
 
 function LinkForm({ parents, eleves }) {
+  const submitting = useRef(false);
   const [form, setForm] = useState({ id_eleve: "", id_parent: "", lien_parente: "", est_responsable: false, est_contact_urgence: false });
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -25,13 +26,13 @@ function LinkForm({ parents, eleves }) {
     setForm((current) => ({ ...current, [name]: type === "checkbox" ? checked : value }));
   };
   async function submit(event) {
-    event.preventDefault(); setMessage(""); setError(""); setSaving(true);
+    event.preventDefault(); if (submitting.current) return; submitting.current = true; setMessage(""); setError(""); setSaving(true);
     try {
       await linkParentToEleve({ ...form, id_eleve: Number(form.id_eleve), id_parent: Number(form.id_parent) });
       setMessage("Le lien parent–élève a été enregistré.");
       setForm({ id_eleve: "", id_parent: "", lien_parente: "", est_responsable: false, est_contact_urgence: false });
     } catch (requestError) { setError(requestError.message || "Création du lien impossible."); }
-    finally { setSaving(false); }
+    finally { submitting.current = false; setSaving(false); }
   }
   return (
     <section className="inline-panel">
@@ -55,13 +56,13 @@ export default function Parents() {
   const references = useReferenceOptions({ parents: getParents, eleves: getEleves }, "parents-eleves");
   return (
     <>
-      <CrudPage
+      <CrudPage referenceError={references.error}
         title="Parents"
         subtitle="Contacts et responsables des élèves."
         icon="👨‍👩‍👧"
         columns={[{ key: "nom", label: "Nom" }, { key: "prenom", label: "Prénom" }, { key: "telephone", label: "Téléphone" }, { key: "email", label: "E-mail" }, { key: "profession", label: "Profession" }]}
         createFields={fields}
-        editFields={fields.map((field) => ({ ...field, required: false }))}
+        editFields={fields}
         initialForm={{ id_etablissement: idEtablissement || "", nom: "", prenom: "", telephone: "", telephone_secondaire: "", email: "", adresse: "", profession: "" }}
         load={getParents}
         create={createParent}

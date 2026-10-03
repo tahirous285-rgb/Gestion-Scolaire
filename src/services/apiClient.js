@@ -59,10 +59,13 @@ export async function apiRequest(path, options = {}) {
     headers["Content-Type"] = headers["Content-Type"] || "application/json";
   }
 
-  const token = getAccessToken();
-  if (token) {
-    headers.Authorization = `${getSession()?.token_type || "bearer"} ${token}`;
+  const isLogin = path === "/auth/login";
+  const token = isLogin ? null : getAccessToken();
+  if (!isLogin && !token) {
+    window.dispatchEvent(new Event("auth:unauthorized"));
+    throw new ApiError("Session expirée. Veuillez vous reconnecter.", 401);
   }
+  if (token) headers.Authorization = `Bearer ${token}`;
 
   let response;
   try {
@@ -81,7 +84,7 @@ export async function apiRequest(path, options = {}) {
 
   const data = await readResponse(response);
 
-  if (response.status === 401) {
+  if (response.status === 401 && !isLogin && getAccessToken() === token) {
     clearSession();
     if (typeof window !== "undefined") {
       window.dispatchEvent(new Event("auth:unauthorized"));
@@ -89,7 +92,7 @@ export async function apiRequest(path, options = {}) {
   }
 
   if (!response.ok) {
-    throw new ApiError(errorMessage(data, response.status), response.status, data);
+    throw new ApiError(response.status === 401 && !isLogin ? "Session expirée ou refusée. Veuillez vous reconnecter." : errorMessage(data, response.status), response.status, data);
   }
 
   return data;

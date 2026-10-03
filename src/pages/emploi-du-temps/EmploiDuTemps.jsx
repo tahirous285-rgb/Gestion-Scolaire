@@ -20,9 +20,9 @@ export default function EmploiDuTemps() {
     { name: "salle", label: "Salle" },
     { name: "observation", label: "Observation", type: "textarea", full: true },
   ];
-  const editFields = createFields.filter((field) => !["id_annee", "id_classe"].includes(field.name)).map((field) => ({ ...field, required: false }));
+  const editFields = createFields.filter((field) => !["id_annee", "id_classe"].includes(field.name));
   return (
-    <CrudPage
+    <CrudPage referenceError={refs.error}
       title="Emploi du temps"
       subtitle="Créneaux rattachés à une année, une classe, un enseignant et une matière."
       icon="🗓️"

@@ -18,18 +18,17 @@ export default function Utilisateurs() {
   const roleOptions = optionsFrom(references.roles, "id_role", (role) => `${role.nom} (${role.code})`);
   const idEtablissement = establishmentId();
   const createFields = [
-    { name: "id_etablissement", label: "ID établissement", type: "number", required: true, default: idEtablissement || "", help: "Identifiant réel attendu par l’API." },
     { name: "id_role", label: "Rôle", type: "select", required: true, options: roleOptions },
     ...baseFields,
     { name: "mot_de_passe", label: "Mot de passe", type: "password", required: true },
   ];
   const editFields = [
     { name: "id_role", label: "Rôle", type: "select", required: true, options: roleOptions },
-    ...baseFields.filter((field) => !["login"].includes(field.name)).map((field) => ({ ...field, required: false })),
+    ...baseFields.filter((field) => !["login"].includes(field.name)),
   ];
 
   return (
-    <CrudPage
+    <CrudPage referenceError={references.error}
       title="Utilisateurs"
       subtitle="Comptes utilisateurs et rôles de l’établissement."
       icon="👥"
@@ -38,7 +37,7 @@ export default function Utilisateurs() {
         { key: "prenom", label: "Prénom" },
         { key: "login", label: "Identifiant" },
         { key: "email", label: "E-mail" },
-        { key: "id_role", label: "ID rôle" },
+        { key: "id_role", label: "Rôle" },
         { key: "statut", label: "Statut" },
       ]}
       createFields={createFields}
@@ -47,6 +46,7 @@ export default function Utilisateurs() {
       load={getUtilisateurs}
       pagination={{ pageSize: 100 }}
       create={createUtilisateur}
+        createPayload={(data) => ({ ...data, id_etablissement: establishmentId() })}
       update={updateUtilisateur}
       remove={deleteUtilisateur}
       rowKey="id_utilisateur"

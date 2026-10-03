@@ -1,3 +1,4 @@
+import { getUtilisateurs } from "../../services/administrationApi";
 import { useReferenceOptions } from "../../hooks/useReferenceOptions";
 import CrudPage from "../../components/common/CrudPage";
 import { getAnnees } from "../../services/anneesApi";
@@ -6,7 +7,7 @@ import { getEnseignants } from "../../services/enseignantsApi";
 import { formatDateTime, formatMoney, optionsFrom } from "../pageUtils";
 
 export default function Honoraires() {
-  const refs = useReferenceOptions({ enseignants: getEnseignants, annees: getAnnees, mois: getMois }, "honoraires");
+  const refs = useReferenceOptions({ utilisateurs: getUtilisateurs, enseignants: getEnseignants, annees: getAnnees, mois: getMois }, "honoraires");
   const monthFields = [
     { name: "numero", label: "Numéro", type: "number", min: 1, max: 12, required: true },
     { name: "libelle", label: "Libellé", required: true },
@@ -24,12 +25,12 @@ export default function Honoraires() {
     { name: "heures_effectuees", label: "Heures effectuées", type: "number", min: 0, step: "0.01" },
     { name: "retenues", label: "Retenues", type: "number", min: 0, step: "0.01" },
     { name: "statut", label: "Statut" },
-    { name: "id_validateur", label: "ID validateur", type: "number" },
+    { name: "id_validateur", label: "Validateur", type: "select", options: optionsFrom(refs.utilisateurs, "id_utilisateur", (row) => `${row.nom} ${row.prenom}`) },
     { name: "observation", label: "Observation", type: "textarea", full: true },
   ];
   return (
     <div className="stacked-pages">
-      <CrudPage
+      <CrudPage referenceError={refs.error}
         title="Mois"
         subtitle="Référentiel des mois utilisé par les honoraires."
         icon="🗓️"
@@ -45,7 +46,7 @@ export default function Honoraires() {
         searchKeys={["numero", "libelle"]}
         emptyText="Aucun mois configuré."
       />
-      <CrudPage
+      <CrudPage referenceError={refs.error}
         title="Honoraires"
         subtitle="Calculs d’honoraires par enseignant, année et mois."
         icon="💼"

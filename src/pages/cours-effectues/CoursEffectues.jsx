@@ -22,7 +22,7 @@ export default function CoursEffectues() {
     { name: "observation", label: "Observation", type: "textarea", full: true },
   ];
   return (
-    <CrudPage
+    <CrudPage referenceError={refs.error}
       title="Cours effectués"
       subtitle="Trace des cours réalisés par les enseignants."
       icon="📖"

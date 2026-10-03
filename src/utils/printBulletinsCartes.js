@@ -1,3 +1,7 @@
+import { getBulletin } from "../services/bulletinsApi";
+import { getCarte } from "../services/cartesApi";
+import QRCode from "qrcode";
+import { photoUrl } from "./imageFile";
 import { getEtablissement } from "../services/administrationApi";
 import { getAnnee, getPeriodes } from "../services/anneesApi";
 import { getClasse } from "../services/classesApi";
@@ -7,17 +11,10 @@ import { getInscription } from "../services/inscriptionsApi";
 import { getMatieres } from "../services/matieresApi";
 import { getNotes } from "../services/notesApi";
 import { establishmentId } from "../services/apiClient";
-import { escapeHtml, formatFrDate, printHtml } from "./printDocument";
-
-function photoSrc(photo) {
-  if (!photo) return "";
-  const value = String(photo).trim();
-  if (/^https?:\/\//i.test(value) || value.startsWith("data:") || value.startsWith("/storage/")) return value;
-  return "";
-}
+import { escapeHtml, formatFrDate, openPrintWindow, printHtml } from "./printDocument";
 
 function photoBlock(photo, alt, size = 110) {
-  const src = photoSrc(photo);
+  const src = photoUrl(photo);
   if (src) {
     return `<img src="${escapeHtml(src)}" alt="${escapeHtml(alt)}" style="width:${size}px;height:${size}px;object-fit:cover;border-radius:8px;border:2px solid #1e3a8a;background:#e5e7eb;" />`;
   }
@@ -29,30 +26,33 @@ async function resolveEleveContext(idInscription) {
   const inscription = await getInscription(idInscription);
   const [eleve, classe, annee] = await Promise.all([
     getEleve(inscription.id_eleve),
-    inscription.id_classe ? getClasse(inscription.id_classe).catch(() => null) : null,
-    inscription.id_annee ? getAnnee(inscription.id_annee).catch(() => null) : null,
+    inscription.id_classe ? getClasse(inscription.id_classe) : null,
+    inscription.id_annee ? getAnnee(inscription.id_annee) : null,
   ]);
   let etablissement = null;
   const idEtab = eleve?.id_etablissement || establishmentId();
   if (idEtab) {
-    try {
-      etablissement = await getEtablissement(idEtab);
-    } catch {
-      etablissement = null;
-    }
+    etablissement = await getEtablissement(idEtab);
   }
   return { inscription, eleve, classe, annee, etablissement };
 }
 
 export async function printBulletin(bulletin) {
+  const popup = openPrintWindow();
+  try {
+    await renderBulletin(await getBulletin(bulletin.id_bulletin), popup);
+  } catch (error) { popup.close(); throw error; }
+}
+
+async function renderBulletin(bulletin, popup) {
   const { inscription, eleve, classe, annee, etablissement } = await resolveEleveContext(
     bulletin.id_inscription,
   );
-  const periodes = await getPeriodes({ id_annee: inscription.id_annee }).catch(() => []);
+  const periodes = await getPeriodes({ id_annee: inscription.id_annee });
   const periode = (periodes || []).find((row) => Number(row.id_periode) === Number(bulletin.id_periode));
 
   let lignes = [];
-  try {
+  {
     const [notes, evaluations, matieres] = await Promise.all([
       getNotes({ id_inscription: bulletin.id_inscription }),
       getEvaluations({ id_classe: inscription.id_classe, id_periode: bulletin.id_periode }),
@@ -74,8 +74,6 @@ export async function printBulletin(bulletin) {
           note: note.absence ? "Abs" : note.valeur,
         };
       });
-  } catch {
-    lignes = [];
   }
 
   const nom = `${eleve?.prenom || ""} ${eleve?.nom || ""}`.trim() || `Élève #${inscription.id_eleve}`;
@@ -122,16 +120,24 @@ export async function printBulletin(bulletin) {
     <p class="muted" style="margin-top:28px;font-size:11px;">Document généré le ${escapeHtml(new Date().toLocaleDateString("fr-FR"))}. Utilisez « Imprimer » puis « Enregistrer au format PDF ».</p>
   </div>`;
 
-  printHtml(`Bulletin — ${nom}`, html);
+  await printHtml(`Bulletin — ${nom}`, html, { popup });
 }
 
-export async function printCarteScolaire(carte) {
+export async function printCarteScolaire(carte, { reprint } = {}) {
+  const popup = openPrintWindow();
+  try {
+    await renderCarte(await getCarte(carte.id_carte), popup);
+    if (reprint) await reprint();
+  } catch (error) { popup.close(); throw error; }
+}
+
+async function renderCarte(carte, popup) {
   const { inscription, eleve, classe, annee, etablissement } = await resolveEleveContext(
     carte.id_inscription,
   );
   const nom = `${eleve?.prenom || ""} ${eleve?.nom || ""}`.trim() || `Élève #${inscription.id_eleve}`;
   const qr = carte.qr_token
-    ? `https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(carte.qr_token)}`
+    ? await QRCode.toDataURL(carte.qr_token, { width: 120, margin: 1 })
     : "";
 
   const html = `
@@ -160,5 +166,5 @@ export async function printCarteScolaire(carte) {
     <p class="muted" style="margin-top:16px;font-size:11px;">Imprimez cette carte (recto) puis enregistrez-la en PDF si besoin. La photo est celle du dossier élève.</p>
   </div>`;
 
-  printHtml(`Carte — ${nom}`, html);
+  await printHtml(`Carte — ${nom}`, html, { popup });
 }

@@ -19,7 +19,7 @@ export default function Classes() {
       icon="🏷️"
       columns={[{ key: "nom", label: "Nom" }, { key: "niveau", label: "Niveau" }, { key: "capacite", label: "Capacité" }, { key: "salle", label: "Salle" }, { key: "actif", label: "Statut", render: (row) => row.actif ? "Active" : "Inactive" }]}
       createFields={fields}
-      editFields={fields.map((field) => ({ ...field, required: false }))}
+      editFields={fields}
       initialForm={{ id_etablissement: idEtablissement || "", nom: "", niveau: "", capacite: "", salle: "", actif: true }}
       load={getClasses}
       create={createClasse}

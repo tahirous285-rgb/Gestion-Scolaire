@@ -12,7 +12,7 @@ Depuis cette version, toutes les routes ci-dessous exigent `Authorization: Beare
 | Rôles | `GET/POST /roles/` | `nom`, `code`, `description` | Liste + création |
 | Utilisateurs | `GET/POST /utilisateurs/`, `GET/PUT/DELETE /utilisateurs/{id}` | création : `id_etablissement`, `id_role`, `nom`, `prenom`, `email`, `telephone`, `login`, `mot_de_passe`, `statut`; mise à jour : `nom`, `prenom`, `email`, `telephone`, `statut`, `id_role` | CRUD adapté aux deux schemas |
 | Paramètres | `GET /parametres/?id_etablissement=`, `POST /parametres/`, `PUT /parametres/{id}` | `id_etablissement`, `cle`, `valeur`, `description` | Liste + création + modification |
-| Journal | `GET /journal/?id_etablissement=&limit=`, `POST /journal/` | `id_etablissement`, `id_utilisateur`, `action`, `module`, `table_cible`, `id_cible`, valeurs ancienne/nouvelle, `adresse_ip` | Liste + entrée conforme au schema |
+| Journal | `GET /journal/?id_etablissement=&limit=`, `POST /journal/` | `id_etablissement`, `id_utilisateur`, `action`, `module`, `table_cible`, `id_cible`, valeurs ancienne/nouvelle, `adresse_ip` | Historique + entrée manuelle explicite conforme au schema |
 
 Le modèle `Permission` existe, mais aucun routeur permissions n’est inclus dans `api_router`. Aucune route `/permissions` n’est fabriquée.
 
@@ -38,7 +38,7 @@ Le modèle `Permission` existe, mais aucun routeur permissions n’est inclus da
 | Évaluations | `GET /evaluations/`, `GET /evaluations/{id}`, `POST /evaluations/` | Liste + création |
 | Notes | `GET/POST /notes/`, `GET/PUT/DELETE /notes/{id}` | CRUD ; le backend valide le barème et les doublons |
 | Présences élèves | `GET/POST /presences-eleves/`, `PUT /presences-eleves/{id}` | Création + liste + modification ; statuts documentés par le modèle : `PRESENT`, `ABSENT`, `RETARD`, `EXCUSE` |
-| Bulletins | `GET/POST /bulletins/`, `GET/PUT /bulletins/{id}`, `PUT /bulletins/{id}/generer-pdf` | CRUD disponible + génération PDF |
+| Bulletins | `GET/POST /bulletins/`, `GET/PUT /bulletins/{id}`, `PUT /bulletins/{id}/generer-pdf` | Liste + création + modification + impression frontend + génération PDF serveur (sans suppression) |
 | Emploi du temps | `GET/POST /emploi-temps/`, `GET/PUT/DELETE /emploi-temps/{id}` | CRUD |
 
 ## Cahier des maîtres
@@ -69,3 +69,17 @@ Le modèle `Permission` existe, mais aucun routeur permissions n’est inclus da
 - Dashboard : `GET /dashboard/?id_etablissement=` avec `eleves`, `enseignants`, `classes`, `parents`, `presences_jour`, `finances` et `activites_recentes`.
 
 La pagination UI est activée uniquement pour les quatre routes qui déclarent réellement `skip`/`limit` (`etablissements`, `utilisateurs`, `eleves`, `enseignants`). Aucune recherche serveur ou filtre non déclaré dans ces routeurs n’est envoyé par le frontend ; la recherche des tables filtre seulement les lignes déjà chargées.
+
+## Précisions frontend — audit du 3 octobre 2026
+
+- Session restaurée : contrôle local de cohérence/expiration puis appel authentifié au `GET /utilisateurs/{id}` existant avant montage protégé. Aucun endpoint `/me` ou refresh token inventé.
+- Années et utilisateurs : `id_etablissement` injecté depuis `establishmentId()`, sans saisie modifiable.
+- Les référentiels élèves/enseignants/utilisateurs parcourent uniquement la pagination réellement exposée ; pas de paramètre fictif sur les autres listes. Certaines listes sont limitées à 100 dans le CRUD Python sans pagination publique : cette limite n’est pas corrigible côté frontend.
+- Les noms des élèves d’une inscription sont résolus avec `GET /eleves/{id}` ; les inscriptions absentes de la liste des cartes et les contextes d’impression utilisent les GET individuels existants.
+- Cartes : impression locale séparée de `PUT /cartes-scolaires/{id}/reimprimer`, qui incrémente le compteur à chaque demande et ne confirme pas une impression physique. `PUT /cartes-scolaires/{id}/generer-qr` conservé ; QR imprimé calculé localement depuis le token sans l’envoyer à un tiers.
+- `photo` reste une chaîne du schéma élève (data URL JPEG pour les imports). Aucun endpoint upload ajouté, aucun fichier `storage/eleves/` revendiqué.
+- PDF serveur : génération demandée aux routes réelles, chemin retourné affiché. `app.main` n’expose aucun montage statique/téléchargement de `storage/`. Le générateur serveur de bulletin ne reçoit pas la photo ; l’impression frontend la contient.
+- Journal : lecture réelle, création manuelle explicite, aucune journalisation automatique frontend. Les activités du dashboard sont exclusivement celles incluses dans sa réponse, issues de JournalActivite.
+- Communication : listes messages filtrées par expéditeur/destinataire connecté selon les paramètres réels ; notifications par utilisateur. Ces filtres ne remplacent pas les contrôles d’accès backend.
+
+Voir [le rapport et les résultats de tests](frontend-audit-2026-10-03.md).

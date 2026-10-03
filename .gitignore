@@ -31,3 +31,7 @@ venv/
 storage/
 *.db
 *.sqlite3
+
+# Frontend test artifacts
+/test-results/
+/playwright-report/

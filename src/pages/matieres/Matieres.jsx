@@ -18,7 +18,7 @@ export default function Matieres() {
       icon="📚"
       columns={[{ key: "code", label: "Code" }, { key: "nom", label: "Nom" }, { key: "description", label: "Description" }, { key: "actif", label: "Statut", render: (row) => row.actif ? "Active" : "Inactive" }]}
       createFields={fields}
-      editFields={fields.map((field) => ({ ...field, required: false }))}
+      editFields={fields}
       initialForm={{ id_etablissement: idEtablissement || "", code: "", nom: "", description: "", actif: true }}
       load={getMatieres}
       create={createMatiere}

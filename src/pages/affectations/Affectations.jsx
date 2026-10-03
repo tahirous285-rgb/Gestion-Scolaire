@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useReferenceOptions } from "../../hooks/useReferenceOptions";
 import BackendUnavailable from "../../components/common/BackendUnavailable";
 import { getAnnees } from "../../services/anneesApi";
@@ -10,6 +10,8 @@ import { optionsFrom } from "../pageUtils";
 export default function Affectations() {
   const references = useReferenceOptions({ enseignants: getEnseignants, matieres: getMatieres, classes: getClasses, annees: getAnnees }, "affectations");
   const teachers = references.enseignants || [];
+  const submitting = useRef(false);
+  const [saving, setSaving] = useState(false);
   const [teacherId, setTeacherId] = useState("");
   const [kind, setKind] = useState("matieres");
   const [links, setLinks] = useState([]);
@@ -32,7 +34,9 @@ export default function Affectations() {
   }
 
   async function submit(event) {
-    event.preventDefault(); setError(""); setSuccess("");
+    event.preventDefault();
+    if (submitting.current || !teacherId) return;
+    submitting.current = true; setSaving(true); setError(""); setSuccess("");
     try {
       const payload = kind === "matieres"
         ? { id_enseignant: Number(teacherId), id_matiere: Number(form.id_matiere), principal: form.principal }
@@ -43,6 +47,7 @@ export default function Affectations() {
       setLinks(data || []);
       setForm((current) => ({ ...current, id_matiere: "", id_classe: "", id_annee: "", principal: false }));
     } catch (requestError) { setError(requestError.message || "Affectation impossible."); }
+    finally { submitting.current = false; setSaving(false); }
   }
 
   const teacherLabel = teachers.find((teacher) => String(teacher.id_enseignant) === String(teacherId));
@@ -54,24 +59,25 @@ export default function Affectations() {
     <div className="crud-page">
       <div className="crud-header"><div><div className="crud-eyebrow">Enseignants</div><h1>🔗 Affectations</h1><p>Relations enseignant–matière et enseignant–classe exposées par l’API.</p></div></div>
       <div className="crud-alert info-alert"><span>Une affectation peut être créée et consultée par enseignant. Le backend n’expose pas de suppression ou de modification de ces relations.</span></div>
+      {references.error && <div className="crud-alert" role="alert">{references.error}</div>}
       {error && <div className="crud-alert">⚠️ {error}</div>}{success && <div className="success-message">✓ {success}</div>}
       <section className="inline-panel">
         <div className="inline-form assignment-selector">
-          <label>Enseignant *<select value={teacherId} onChange={(event) => { setTeacherId(event.target.value); setLinks([]); setLoading(Boolean(event.target.value)); setError(""); }} required><option value="">Sélectionner…</option>{teachers.map((row) => <option key={row.id_enseignant} value={row.id_enseignant}>{row.matricule} — {row.nom} {row.prenom}</option>)}</select></label>
-          <label>Relation<select value={kind} onChange={(event) => { setKind(event.target.value); setLinks([]); setLoading(Boolean(teacherId)); setError(""); setForm((current) => ({ ...current, id_matiere: "", id_classe: "", id_annee: "" })); }}><option value="matieres">Matière</option><option value="classes">Classe</option></select></label>
+          <label>Enseignant *<select disabled={saving} value={teacherId} onChange={(event) => { setTeacherId(event.target.value); setLinks([]); setLoading(Boolean(event.target.value)); setError(""); }} required><option value="">Sélectionner…</option>{teachers.map((row) => <option key={row.id_enseignant} value={row.id_enseignant}>{row.matricule} — {row.nom} {row.prenom}</option>)}</select></label>
+          <label>Relation<select disabled={saving} value={kind} onChange={(event) => { setKind(event.target.value); setLinks([]); setLoading(Boolean(teacherId)); setError(""); setForm((current) => ({ ...current, id_matiere: "", id_classe: "", id_annee: "" })); }}><option value="matieres">Matière</option><option value="classes">Classe</option></select></label>
         </div>
       </section>
       <section className="inline-panel">
         <div className="inline-panel-heading"><div><div className="crud-eyebrow">{teacherLabel ? `${teacherLabel.nom} ${teacherLabel.prenom}` : "Aucun enseignant sélectionné"}</div><h2>Ajouter une affectation</h2></div></div>
         <form className="inline-form" onSubmit={submit}>
-          {kind === "matieres" ? <label>Matière *<select name="id_matiere" value={form.id_matiere} onChange={change} required disabled={!teacherId}><option value="">Sélectionner…</option>{matiereOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label> : <><label>Classe *<select name="id_classe" value={form.id_classe} onChange={change} required disabled={!teacherId}><option value="">Sélectionner…</option>{classeOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label><label>Année scolaire *<select name="id_annee" value={form.id_annee} onChange={change} required disabled={!teacherId}><option value="">Sélectionner…</option>{anneeOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label></>}
-          <label className="inline-check"><input type="checkbox" name="principal" checked={form.principal} onChange={change} disabled={!teacherId} /> Affectation principale</label>
-          <button className="crud-primary" disabled={!teacherId}>Affecter</button>
+          {kind === "matieres" ? <label>Matière *<select name="id_matiere" value={form.id_matiere} onChange={change} required disabled={!teacherId || saving || loading}><option value="">Sélectionner…</option>{matiereOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label> : <><label>Classe *<select name="id_classe" value={form.id_classe} onChange={change} required disabled={!teacherId || saving || loading}><option value="">Sélectionner…</option>{classeOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label><label>Année scolaire *<select name="id_annee" value={form.id_annee} onChange={change} required disabled={!teacherId || saving || loading}><option value="">Sélectionner…</option>{anneeOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label></>}
+          <label className="inline-check"><input type="checkbox" name="principal" checked={form.principal} onChange={change} disabled={!teacherId || saving || loading} /> Affectation principale</label>
+          <button className="crud-primary" disabled={!teacherId || saving || loading}>{saving ? "Enregistrement…" : "Affecter"}</button>
         </form>
       </section>
       <section className="crud-table-card assignment-results">
         <div className="inline-panel-heading"><div><h2>{kind === "matieres" ? "Matières affectées" : "Classes affectées"}</h2><p>{loading ? "Chargement…" : `${links.length} relation(s)`}</p></div></div>
-        {!teacherId ? <div className="crud-state"><h3>Sélectionnez un enseignant</h3></div> : links.length === 0 && !loading ? <div className="crud-state"><h3>Aucune affectation</h3></div> : <div className="relation-list">{links.map((link, index) => <div className="relation-row" key={`${kind}-${index}-${link.id_matiere || link.id_classe}`}><span>{kind === "matieres" ? `Matière #${link.id_matiere}` : `Classe #${link.id_classe} · Année #${link.id_annee}`}</span>{link.principal ? <span className="status-badge success">Principal</span> : <span className="status-badge neutral">Secondaire</span>}</div>)}</div>}
+        {!teacherId ? <div className="crud-state"><h3>Sélectionnez un enseignant</h3></div> : links.length === 0 && !loading ? <div className="crud-state"><h3>Aucune affectation</h3></div> : <div className="relation-list">{links.map((link, index) => <div className="relation-row" key={`${kind}-${index}-${link.id_matiere || link.id_classe}`}><span>{kind === "matieres" ? (matiereOptions.find((item) => Number(item.value) === link.id_matiere)?.label || `Matière #${link.id_matiere}`) : `${classeOptions.find((item) => Number(item.value) === link.id_classe)?.label || `Classe #${link.id_classe}`} · ${anneeOptions.find((item) => Number(item.value) === link.id_annee)?.label || `Année #${link.id_annee}`}`}</span>{link.principal ? <span className="status-badge success">Principal</span> : <span className="status-badge neutral">Secondaire</span>}</div>)}</div>}
       </section>
       <div className="page-note"><BackendUnavailable>les affectations classe–matière (ClasseMatiere) sont déclarées dans les modèles mais aucun routeur backend ne les expose.</BackendUnavailable></div>
     </div>

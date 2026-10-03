@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { GraduationCap, LockKeyhole, LogIn, School, UserRound } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 
 function Login() {
+  const submitting = useRef(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { signIn } = useAuth();
@@ -18,6 +19,8 @@ function Login() {
 
   async function submit(event) {
     event.preventDefault();
+    if (submitting.current) return;
+    submitting.current = true;
     setError("");
     setLoading(true);
     try {
@@ -27,6 +30,7 @@ function Login() {
     } catch (requestError) {
       setError(requestError.message || "Identifiants invalides.");
     } finally {
+      submitting.current = false;
       setLoading(false);
     }
   }

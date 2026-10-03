@@ -7,7 +7,7 @@ import { formatDate, optionsFrom } from "../pageUtils";
 
 export default function PresencesEleves() {
   const refs = useReferenceOptions({ inscriptions: getInscriptions }, "presences-eleves");
-  const inscriptionOptions = optionsFrom(refs.inscriptions, "id_inscription", (row) => `Inscription #${row.id_inscription} — élève #${row.id_eleve}`);
+  const inscriptionOptions = optionsFrom(refs.inscriptions, "id_inscription", (row) => row.label);
   const fields = [
     { name: "id_inscription", label: "Inscription", type: "select", required: true, options: inscriptionOptions },
     { name: "date_presence", label: "Date", type: "date", required: true },
@@ -18,9 +18,9 @@ export default function PresencesEleves() {
     { name: "justifiee", label: "Absence justifiée", type: "checkbox" },
     { name: "observation", label: "Observation", type: "textarea", full: true },
   ];
-  const editFields = fields.filter((field) => !["id_inscription", "date_presence"].includes(field.name)).map((field) => ({ ...field, required: false }));
+  const editFields = fields.filter((field) => !["id_inscription", "date_presence"].includes(field.name));
   return (
-    <CrudPage
+    <CrudPage referenceError={refs.error}
       title="Présences élèves"
       subtitle="Pointage quotidien par inscription. Le backend empêche les doublons date–inscription."
       icon="🟢"

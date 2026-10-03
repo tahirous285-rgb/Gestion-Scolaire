@@ -19,13 +19,13 @@ export default function PaiementsHonoraires() {
   const [honoraireId, setHonoraireId] = useState("");
   const honoraires = refs.honoraires || [];
   const honorariumOptions = optionsFrom(honoraires, "id_honoraire", (row) => `Honoraire #${row.id_honoraire} — ${formatMoney(row.montant_net)}`);
-  const formFields = fields.map((field) => field.name === "id_honoraire" ? { ...field, options: honorariumOptions } : field);
+  const formFields = fields.map((field) => field.name === "id_honoraire" ? { ...field, options: honorariumOptions, disabled: true } : field);
   const load = () => honoraireId ? getPaiementsHonoraire(honoraireId) : Promise.resolve([]);
   return (
     <div className="crud-page">
       <div className="crud-header"><div><div className="crud-eyebrow">Honoraires</div><h1>💳 Paiements honoraires</h1><p>Le backend expose les paiements par honoraire, pas de liste globale.</p></div></div>
       <section className="inline-panel"><label>Honoraire à consulter<select value={honoraireId} onChange={(event) => setHonoraireId(event.target.value)}><option value="">Sélectionner…</option>{honorariumOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label></section>
-      <CrudPage
+      <CrudPage referenceError={refs.error}
         key={honoraireId || "aucun-honoraire"}
         title="Paiements honoraires"
         subtitle={honoraireId ? `Paiements de l’honoraire #${honoraireId}.` : "Sélectionnez un honoraire pour consulter ses paiements."}
@@ -35,7 +35,7 @@ export default function PaiementsHonoraires() {
         initialForm={{ id_honoraire: honoraireId, reference: "", date_paiement: "", montant: "", mode_paiement: "", commentaire: "" }}
         load={load}
         create={createPaiementHonoraire}
-        createPayload={(data) => ({ ...data, id_honoraire: Number(data.id_honoraire), id_utilisateur: userId() })}
+        createPayload={(data) => ({ ...data, id_honoraire: Number(honoraireId), id_utilisateur: userId() })}
         canUpdate={false}
         canDelete={false}
         canCreate={Boolean(honoraireId)}

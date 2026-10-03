@@ -21,7 +21,7 @@ VITE_BACKEND_URL=http://adresse-du-backend:8000 npm run dev
 
 - `src/services/apiClient.js` : point d’entrée HTTP unique, JWT, erreurs et gestion de `401`.
 - `src/services/*Api.js` : fonctions métier alignées sur les routes FastAPI.
-- `src/hooks/useAuth.jsx` : session de connexion et protection des routes.
+- `src/hooks/AuthProvider.jsx` et `src/hooks/useAuth.js` : session de connexion et protection des routes.
 - `src/components/common/CrudPage.jsx` : table, recherche, consultation et formulaires CRUD réutilisables.
 - `src/pages/` : modules de l’application.
 
@@ -60,3 +60,25 @@ uvicorn app.main:app --reload --port 8000
 npm run build
 npm run lint
 ```
+
+## Finalisation frontend (octobre 2026)
+
+Rapport détaillé : [audit frontend](docs/frontend-audit-2026-10-03.md).
+
+- Une session restaurée est vérifiée sur l’API avant l’affichage protégé ; expiration et `401` renvoient à la connexion.
+- Le dashboard n’affiche que les valeurs retournées par son endpoint, sans statistiques mensuelles fabriquées.
+- Le bouton **📷 Choisir une photo** ouvre le sélecteur de fichiers du système (Explorateur sous Windows). JPG/PNG/WebP/GIF, 8 Mo maximum ; conversion JPEG et stockage comme chaîne dans `photo`, sans prétendre créer un fichier serveur.
+- Cartes et bulletins : impression frontend avec photo ; QR local sans service externe. La génération PDF serveur reste disponible mais son chemin n’est pas un lien téléchargeable : le backend actuel n’expose pas `storage/`. Le PDF serveur du bulletin ne reçoit pas la photo.
+- Les recherches filtrent les lignes chargées uniquement. Les filtres UI et l’établissement de session ne remplacent pas les autorisations backend.
+
+### Tests frontend
+
+```bash
+npm ci
+npx playwright install --with-deps chromium
+npm test
+npm run lint
+npm run build
+```
+
+Les tests Playwright démarrent/réutilisent Vite sur le port 5173. Ils utilisent des réponses API interceptées **uniquement dans `tests/`**, jamais dans l’application. Les méthodes/routes et les champs de payload sont confrontés aux fichiers backend versionnés, sans modification ni écriture SQLite. `CHROMIUM_PATH` permet de choisir un Chromium déjà installé.

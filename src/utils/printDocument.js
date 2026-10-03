@@ -1,10 +1,15 @@
-/** Ouvre une fenêtre d’impression (Enregistrer au format PDF dans le dialogue). */
-export function printHtml(title, bodyHtml, { landscape = false } = {}) {
-  const popup = window.open("", "_blank", "noopener,noreferrer,width=920,height=740");
-  if (!popup) {
-    throw new Error("Autorisez les fenêtres pop-up pour imprimer le document.");
-  }
+/** Réserver la fenêtre pendant le clic, avant tout appel API asynchrone. */
+export function openPrintWindow() {
+  const popup = window.open("", "_blank", "width=920,height=740");
+  if (!popup) throw new Error("Autorisez les fenêtres pop-up pour imprimer le document.");
+  popup.opener = null;
+  popup.document.write('<p>Préparation du document…</p>');
+  return popup;
+}
 
+export async function printHtml(title, bodyHtml, { landscape = false, popup = openPrintWindow() } = {}) {
+  if (popup.closed) throw new Error("La fenêtre d’impression a été fermée.");
+  popup.document.open();
   popup.document.write(`<!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -34,13 +39,8 @@ export function printHtml(title, bodyHtml, { landscape = false } = {}) {
 </html>`);
   popup.document.close();
   popup.focus();
-  setTimeout(() => {
-    try {
-      popup.print();
-    } catch {
-      /* l’utilisateur peut cliquer sur le bouton */
-    }
-  }, 400);
+  await Promise.all([...popup.document.images].map((image) => image.decode().catch(() => null)));
+  if (!popup.closed) popup.print();
 }
 
 export function escapeHtml(value) {

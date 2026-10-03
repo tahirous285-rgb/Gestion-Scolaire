@@ -13,7 +13,6 @@ export default function AnneesPeriodes() {
   const periodsLoad = useMemo(() => () => getPeriodes(), []);
 
   const yearFields = [
-    { name: "id_etablissement", label: "ID établissement", type: "number", required: true, default: idEtablissement || "" },
     { name: "libelle", label: "Libellé", required: true, placeholder: "2025-2026" },
     { name: "date_debut", label: "Date de début", type: "date", required: true },
     { name: "date_fin", label: "Date de fin", type: "date", required: true },
@@ -30,7 +29,7 @@ export default function AnneesPeriodes() {
 
   return (
     <div className="stacked-pages">
-      <CrudPage
+      <CrudPage referenceError={references.error}
         title="Années scolaires"
         subtitle="Périodes scolaires rattachées à l’établissement connecté."
         icon="📅"
@@ -44,6 +43,7 @@ export default function AnneesPeriodes() {
         initialForm={{ id_etablissement: idEtablissement || "", libelle: "", date_debut: "", date_fin: "", statut: "active" }}
         load={yearsLoad}
         create={createAnnee}
+        createPayload={(data) => ({ ...data, id_etablissement: establishmentId() })}
         canUpdate={false}
         canDelete={false}
         rowKey="id_annee"
@@ -51,11 +51,12 @@ export default function AnneesPeriodes() {
         searchKeys={["libelle", "statut"]}
         emptyText="Aucune année scolaire."
       />
-      <CrudPage
+      <CrudPage referenceError={references.error}
         title="Périodes"
         subtitle="Trimestres, semestres ou périodes définis par le backend."
         icon="🗓️"
         columns={[
+          { key: "id_annee", label: "Année" },
           { key: "code", label: "Code" },
           { key: "libelle", label: "Libellé" },
           { key: "ordre", label: "Ordre" },

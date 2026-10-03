@@ -56,7 +56,12 @@ function PublicOnlyRoute({ children }) {
 }
 
 export default function AppRoutes() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, checkingSession, verificationError, retryVerification, signOut } = useAuth();
+
+  if (checkingSession) return <main className="crud-page">
+    {verificationError ? <><div className="crud-alert" role="alert">{verificationError}</div><button className="crud-primary" onClick={retryVerification}>Réessayer</button> <button className="crud-secondary" onClick={signOut}>Retour à la connexion</button></>
+      : <div className="crud-state" role="status">Vérification de la session…</div>}
+  </main>;
 
   return (
     <Routes>

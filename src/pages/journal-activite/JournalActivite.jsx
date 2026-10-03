@@ -20,7 +20,7 @@ export default function JournalActivite() {
   return (
     <CrudPage
       title="Journal d’activité"
-      subtitle="Les dernières opérations enregistrées par l’API."
+      subtitle="Historique des 100 dernières entrées retournées par l’API. Son alimentation automatique n’est pas garantie ; les entrées manuelles sont explicites."
       icon="🧾"
       columns={[
         { key: "date_action", label: "Date", render: (row) => formatDateTime(row.date_action) },
@@ -37,7 +37,7 @@ export default function JournalActivite() {
       canUpdate={false}
       canDelete={false}
       rowKey="id_journal"
-      createLabel="Nouvelle entrée"
+      createLabel="Consigner une entrée manuelle"
       searchKeys={["action", "module", "table_cible", "adresse_ip"]}
       emptyText="Aucune activité pour cet établissement."
     />

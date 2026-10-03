@@ -31,7 +31,7 @@ export default function Enseignants() {
         { key: "date_embauche", label: "Embauche", render: (row) => formatDate(row.date_embauche) }, { key: "statut", label: "Statut" },
       ]}
       createFields={fields}
-      editFields={fields.filter((field) => field.name !== "date_embauche").map((field) => ({ ...field, required: false }))}
+      editFields={fields.filter((field) => field.name !== "date_embauche")}
       initialForm={{ id_etablissement: idEtablissement || "", matricule: "", nom: "", prenom: "", sexe: "", date_naissance: "", telephone: "", email: "", adresse: "", date_embauche: "", statut: "actif", taux_horaire: "", actif: true }}
       load={getEnseignants}
       pagination={{ pageSize: 100 }}

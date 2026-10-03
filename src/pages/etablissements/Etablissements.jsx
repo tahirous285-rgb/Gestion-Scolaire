@@ -34,7 +34,7 @@ export default function Etablissements() {
         { key: "actif", label: "Statut", render: (row) => row.actif ? "Actif" : "Inactif" },
       ]}
       createFields={fields}
-      editFields={fields.map((field) => ({ ...field, required: false }))}
+      editFields={fields}
       initialForm={initialForm}
       load={getEtablissements}
       pagination={{ pageSize: 100 }}
