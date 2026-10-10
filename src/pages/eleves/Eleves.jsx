@@ -15,7 +15,7 @@ const fields = [
   { name: "adresse", label: "Adresse", full: true },
   { name: "telephone", label: "Téléphone" },
   { name: "email", label: "E-mail", type: "email" },
-  { name: "photo", label: "Photo de l’élève", type: "image", full: true, help: "Importer depuis l’explorateur de fichiers. La photo est enregistrée dans le dossier et reste dans l’application (cartes et bulletins)." },
+  { name: "photo", label: "Photo de l’élève", type: "image", full: true, help: "Choisissez un fichier JPG, PNG, WebP, GIF ou BMP (8 Mo maximum). Il est optimisé puis enregistré comme chaîne image dans le champ photo de l’API; aucun fichier physique n’est envoyé vers storage/." },
   { name: "actif", label: "Élève actif", type: "checkbox", default: true },
 ];
 

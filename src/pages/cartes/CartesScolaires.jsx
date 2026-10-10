@@ -25,6 +25,24 @@ function ElevePhoto({ eleve }) {
   );
 }
 
+async function printAndMaybeCountReprint(carte) {
+  const result = await printCarteScolaire(carte);
+  if (result?.status !== "dialog-closed") return;
+
+  const confirmed = window.confirm(
+    "Le dialogue d’impression est fermé. Le navigateur ne distingue pas une impression réussie d’une annulation.\n\nOK : confirmer que la carte a réellement été imprimée et incrémenter le compteur.\nAnnuler : ne pas modifier le compteur.",
+  );
+  if (confirmed) await reimprimerCarte(carte.id_carte);
+}
+
+async function generateQrForCarte(idCarte) {
+  try {
+    return await generateCarteQr(idCarte);
+  } catch (error) {
+    throw new Error(`Génération du QR impossible : ${error.message || "erreur réseau"}`, { cause: error });
+  }
+}
+
 export default function CartesScolaires() {
   const refs = useReferenceOptions(
     { inscriptions: getInscriptions, eleves: () => getEleves({ limit: 500 }) },
@@ -50,7 +68,7 @@ export default function CartesScolaires() {
   return (
     <CrudPage
       title="Cartes scolaires"
-      subtitle="Impression PDF de la carte avec la photo de l’élève concerné."
+      subtitle="La carte HTML reprend l’élève de l’inscription, sa photo enregistrée dans le champ photo et le QR de son token; utilisez Imprimer / PDF pour ouvrir le dialogue d’impression."
       icon="🪪"
       columns={[
         { key: "photo", label: "Photo", render: (row) => <ElevePhoto eleve={eleveOf(row)} /> },
@@ -72,11 +90,8 @@ export default function CartesScolaires() {
       createPayload={(data) => ({ ...data, id_generateur: userId() })}
       extraActions={(row, { runAction, busy }) => (
         <>
-          <button type="button" disabled={busy} onClick={() => runAction(async () => {
-            await printCarteScolaire(row);
-            await reimprimerCarte(row.id_carte);
-          })}>🖨 Imprimer / PDF</button>
-          <button type="button" disabled={busy} onClick={() => runAction(() => generateCarteQr(row.id_carte))}>▣ Générer QR</button>
+          <button type="button" disabled={busy} onClick={() => runAction(() => printAndMaybeCountReprint(row))}>🖨 Imprimer / PDF</button>
+          <button type="button" disabled={busy} onClick={() => runAction(() => generateQrForCarte(row.id_carte))}>▣ Générer QR</button>
         </>
       )}
       canUpdate={false}

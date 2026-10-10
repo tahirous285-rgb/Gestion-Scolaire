@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { fileToStoredPhoto } from "../../utils/imageFile";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { fileToStoredPhoto, photoUrl, PHOTO_ACCEPT } from "../../utils/imageFile";
 import "./CrudPage.css";
 
 function valueFor(row, key) {
@@ -32,7 +32,8 @@ function serializeForm(form, fields) {
   }, {});
 }
 
-function Field({ field, value, onChange, disabled }) {
+function Field({ field, value, onChange, disabled, imageLoading = false }) {
+  const fileInputRef = useRef(null);
   const common = {
     name: field.name,
     value: value ?? "",
@@ -75,29 +76,42 @@ function Field({ field, value, onChange, disabled }) {
             </select>
           ) : field.type === "image" ? (
             <div className="crud-image-field">
-              {value ? (
-                <img src={value} alt="Aperçu" className="crud-image-preview" />
+              {photoUrl(value) ? (
+                <img src={photoUrl(value)} alt="Aperçu de la photo de l’élève" className="crud-image-preview" />
               ) : (
                 <div className="crud-image-placeholder">Aucune photo</div>
               )}
               <div className="crud-image-actions">
                 <input
+                  ref={fileInputRef}
+                  className="crud-file-input"
                   id={field.name}
                   name={field.name}
                   type="file"
-                  accept="image/*"
+                  accept={field.accept || PHOTO_ACCEPT}
+                  aria-label="Choisir une photo"
                   disabled={disabled || field.disabled}
                   onChange={onChange}
                 />
-                {value ? (
+                <button
+                  type="button"
+                  className="crud-secondary"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={disabled || field.disabled}
+                >
+                  {photoUrl(value) ? "Remplacer la photo" : "Choisir une photo"}
+                </button>
+                {photoUrl(value) ? (
                   <button
                     type="button"
                     className="crud-secondary"
                     onClick={() => onChange({ target: { name: field.name, value: "", type: "text" } })}
+                    disabled={disabled || field.disabled}
                   >
-                    Retirer
+                    Retirer la photo
                   </button>
                 ) : null}
+                {imageLoading ? <small role="status">Traitement de la photo…</small> : null}
               </div>
             </div>
           ) : (
@@ -157,7 +171,10 @@ export default function CrudPage({
   const [selected, setSelected] = useState(null);
   const [menu, setMenu] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [readingPhoto, setReadingPhoto] = useState(false);
   const [actionBusy, setActionBusy] = useState(null);
+  const photoReadRequestRef = useRef(0);
+  const photoReadInProgressRef = useRef(false);
   const [page, setPage] = useState(0);
   const [hasNextPage, setHasNextPage] = useState(false);
   const pageSize = pagination?.pageSize || null;
@@ -207,6 +224,9 @@ export default function CrudPage({
   }, [rows, search, searchKeys]);
 
   function openCreate() {
+    photoReadRequestRef.current += 1;
+    photoReadInProgressRef.current = false;
+    setReadingPhoto(false);
     setSelected(null);
     setForm({ ...initialForm });
     setError("");
@@ -215,6 +235,9 @@ export default function CrudPage({
   }
 
   function openEdit(row) {
+    photoReadRequestRef.current += 1;
+    photoReadInProgressRef.current = false;
+    setReadingPhoto(false);
     setSelected(row);
     const nextForm = {};
     editFields.forEach((field) => {
@@ -228,6 +251,9 @@ export default function CrudPage({
 
   function closeModal(force = false) {
     if (force || !saving) {
+      photoReadRequestRef.current += 1;
+      photoReadInProgressRef.current = false;
+      setReadingPhoto(false);
       setModal(null);
       setSelected(null);
     }
@@ -237,16 +263,34 @@ export default function CrudPage({
     const { name, value, type, checked, files } = event.target;
     if (type === "file") {
       const file = files?.[0];
-      if (!file) return;
-      try {
-        setError("");
-        const stored = await fileToStoredPhoto(file);
-        setForm((current) => ({ ...current, [name]: stored }));
-      } catch (readError) {
-        setError(readError.message || "Import de la photo impossible.");
-      }
       event.target.value = "";
+      if (!file) return;
+
+      const requestId = ++photoReadRequestRef.current;
+      photoReadInProgressRef.current = true;
+      setReadingPhoto(true);
+      setError("");
+      try {
+        const stored = await fileToStoredPhoto(file);
+        if (requestId === photoReadRequestRef.current) {
+          setForm((current) => ({ ...current, [name]: stored }));
+        }
+      } catch (readError) {
+        if (requestId === photoReadRequestRef.current) {
+          setError(readError.message || "Import de la photo impossible.");
+        }
+      } finally {
+        if (requestId === photoReadRequestRef.current) {
+          photoReadInProgressRef.current = false;
+          setReadingPhoto(false);
+        }
+      }
       return;
+    }
+    if (name === "photo") {
+      photoReadRequestRef.current += 1;
+      photoReadInProgressRef.current = false;
+      setReadingPhoto(false);
     }
     setForm((current) => ({
       ...current,
@@ -256,6 +300,10 @@ export default function CrudPage({
 
   async function submit(event) {
     event.preventDefault();
+    if (photoReadInProgressRef.current) {
+      setError("Attendez la fin du traitement de la photo avant d’enregistrer l’élève.");
+      return;
+    }
     try {
       setSaving(true);
       setError("");
@@ -279,12 +327,14 @@ export default function CrudPage({
   }
 
   async function deleteRow(row) {
-    const label = row[fields[0]?.name] || row[rowKey];
+    const actionId = row[rowKey];
+    if (actionBusy === actionId) return;
+    const label = row[fields[0]?.name] || actionId;
     if (!window.confirm(`Supprimer « ${label} » ?`)) return;
     try {
-      setActionBusy(row[rowKey]);
+      setActionBusy(actionId);
       setError("");
-      await remove(row[rowKey]);
+      await remove(actionId);
       setMenu(null);
       await refresh();
     } catch (requestError) {
@@ -295,8 +345,10 @@ export default function CrudPage({
   }
 
   async function runAction(row, action) {
+    const actionId = row[rowKey];
+    if (actionBusy === actionId) return;
     try {
-      setActionBusy(row[rowKey]);
+      setActionBusy(actionId);
       setError("");
       await action(row);
       setMenu(null);
@@ -475,7 +527,8 @@ export default function CrudPage({
                     field={field}
                     value={form[field.name]}
                     onChange={change}
-                    disabled={selected && field.disabledOnEdit}
+                    disabled={saving || (selected && field.disabledOnEdit)}
+                    imageLoading={field.type === "image" && readingPhoto}
                   />
                 ))}
               </div>
@@ -483,8 +536,8 @@ export default function CrudPage({
                 <button type="button" className="crud-secondary" onClick={() => closeModal()}>
                   Annuler
                 </button>
-                <button className="crud-primary" type="submit" disabled={saving}>
-                  {saving ? "Enregistrement…" : "Enregistrer"}
+                <button className="crud-primary" type="submit" disabled={saving || readingPhoto}>
+                  {readingPhoto ? "Traitement de la photo…" : saving ? "Enregistrement…" : "Enregistrer"}
                 </button>
               </div>
             </form>
