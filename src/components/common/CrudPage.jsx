@@ -26,8 +26,8 @@ function csvCell(value) {
   }
 
   // Évite d’exporter une photo en base64 et protège les tableurs des formules CSV.
-  if (/^data:image\\//i.test(text)) text = "Photo enregistrée";
-  if (!isNumericValue && /^[\\t\\r ]*[=+\\-@]/.test(text)) text = "'" + text;
+  if (text.toLowerCase().startsWith("data:image/")) text = "Photo enregistrée";
+  if (!isNumericValue && ["=", "+", "-", "@"].includes(text.trimStart().charAt(0))) text = "'" + text;
   return '"' + text.replace(/"/g, '""') + '"';
 }
 
