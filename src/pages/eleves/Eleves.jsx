@@ -27,7 +27,7 @@ export default function Eleves() {
       subtitle="Dossier administratif des élèves de l’établissement connecté."
       icon="🎓"
       columns={[
-        { key: "photo", label: "Photo", render: (row) => (
+        { key: "photo", label: "Photo", exportValue: (row) => row.photo ? "Photo enregistrée" : "Aucune photo", render: (row) => (
           photoUrl(row.photo)
             ? <img src={photoUrl(row.photo)} alt="" width={36} height={36} style={{ width: 36, height: 36, objectFit: "cover", borderRadius: 8 }} />
             : "—"
@@ -36,9 +36,9 @@ export default function Eleves() {
         { key: "nom", label: "Nom" },
         { key: "prenom", label: "Prénom" },
         { key: "sexe", label: "Sexe" },
-        { key: "date_naissance", label: "Naissance", render: (row) => formatDate(row.date_naissance) },
+        { key: "date_naissance", label: "Naissance", render: (row) => formatDate(row.date_naissance), exportValue: (row) => formatDate(row.date_naissance) },
         { key: "telephone", label: "Téléphone" },
-        { key: "actif", label: "Statut", render: (row) => row.actif ? "Actif" : "Inactif" },
+        { key: "actif", label: "Statut", render: (row) => row.actif ? "Actif" : "Inactif", exportValue: (row) => row.actif ? "Actif" : "Inactif" },
       ]}
       createFields={fields}
       editFields={fields.map((field) => ({ ...field, required: false }))}
