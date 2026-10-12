@@ -939,3 +939,10 @@ textarea {
     flex: 1 1 auto;
   }
 }
+
+
+@media (prefers-reduced-motion: reduce) {
+  .refresh-spinning {
+    animation: none;
+  }
+}
