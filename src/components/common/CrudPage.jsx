@@ -394,13 +394,13 @@ export default function CrudPage({
           .join(";"),
       ),
     ];
-    const csv = "\\uFEFF" + lines.join("\\r\\n");
+    const csv = String.fromCharCode(0xfeff) + lines.join(String.fromCharCode(13, 10));
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     const fileSlug = (title || "donnees")
       .normalize("NFD")
-      .replace(/[\\u0300-\\u036f]/g, "")
+      .replace(/[\u0300-\u036f]/g, "")
       .replace(/[^a-zA-Z0-9]+/g, "-")
       .replace(/^-|-$/g, "")
       .toLowerCase();
