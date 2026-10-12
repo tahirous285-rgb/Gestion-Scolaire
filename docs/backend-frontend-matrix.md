@@ -69,3 +69,28 @@ Le modèle `Permission` existe, mais aucun routeur permissions n’est inclus da
 - Dashboard : `GET /dashboard/?id_etablissement=` avec `eleves`, `enseignants`, `classes`, `parents`, `presences_jour`, `finances` et `activites_recentes`.
 
 La pagination UI est activée uniquement pour les quatre routes qui déclarent réellement `skip`/`limit` (`etablissements`, `utilisateurs`, `eleves`, `enseignants`). Aucune recherche serveur ou filtre non déclaré dans ces routeurs n’est envoyé par le frontend ; la recherche des tables filtre seulement les lignes déjà chargées.
+
+## Filtrage établissement : contrat réel et dépendances backend
+
+Les routes suivantes déclarent réellement un paramètre `id_etablissement` et le frontend transmet l’identifiant de la session via `establishmentId()` :
+
+| Route GET | Page frontend | Comportement backend |
+| --- | --- | --- |
+| `/dashboard/?id_etablissement=` | Dashboard | Agrège les indicateurs de l’établissement demandé. L’API a toutefois `2` comme valeur par défaut : le frontend doit toujours transmettre l’identifiant de session. |
+| `/communication/annonces?id_etablissement=` | Annonces | Filtre les annonces si l’identifiant est fourni. |
+| `/frais-scolaires/types?id_etablissement=` | Frais scolaires — types | Filtre les types de frais si l’identifiant est fourni. |
+| `/depenses/?id_etablissement=` | Dépenses | Filtre les dépenses si l’identifiant est fourni. |
+| `/parametres/?id_etablissement=` | Paramètres | Identifiant requis par l’API. |
+| `/journal/?id_etablissement=&limit=` | Journal d’activité | Identifiant requis par l’API ; limite déclarée par l’API. |
+
+Les autres listes n’acceptent pas de filtre d’établissement direct. Certaines acceptent seulement un filtre relationnel (`id_eleve`, `id_inscription`, `id_annee`, `id_classe`, `id_enseignant`, `id_periode`, ou l’identifiant utilisateur) ; cela ne constitue pas un filtrage d’établissement ni une garantie d’isolation. En particulier, les pages et sélecteurs concernés sont :
+
+- Administration et références : Établissements (`GET /etablissements/`), Utilisateurs (`GET /utilisateurs/`), Rôles (`GET /roles/`).
+- Scolarité : Années/périodes (`GET /annees-scolaires/`, `/periodes/?id_annee=`), Élèves (`GET /eleves/`), Parents (`GET /parents/`), Inscriptions (`GET /inscriptions/?id_eleve=&id_annee=`), Classes (`GET /classes/`) et Matières (`GET /matieres/`).
+- Pédagogie : Enseignants (`GET /enseignants/`), Affectations (`GET /enseignants/{id}/matieres`, `/enseignants/{id}/classes?id_annee=`), Évaluations (`GET /evaluations/?id_classe=&id_periode=`), Notes (`GET /notes/?id_evaluation=&id_inscription=`), Présences élèves (`GET /presences-eleves/?id_inscription=`), Bulletins (`GET /bulletins/?id_inscription=&id_periode=`), Emploi du temps (`GET /emploi-temps/?id_classe=&id_enseignant=&id_annee=`), Cahier maître (`GET /presences-enseignants/?id_enseignant=`, `/cours-effectues/?id_enseignant=&id_classe=`) et Observations enseignants (`GET /observations-enseignants/?id_enseignant=`).
+- Finance et documents : Honoraires (`GET /honoraires/mois`, `/honoraires/?id_enseignant=&id_annee=`), Frais scolaires (`GET /frais-scolaires/?id_inscription=&id_annee=`), Paiements (`GET /paiements/?id_inscription=`), Reçus (`GET /recus/paiement/{id}`) et Cartes scolaires (`GET /cartes-scolaires/?id_inscription=`).
+- Communication : Messages (`GET /communication/messages?id_destinataire=&id_expediteur=`) et Notifications (`GET /communication/notifications?id_utilisateur=`). Les notifications sont limitées par l’identifiant utilisateur ; la liste des messages peut être construite à partir des filtres expéditeur/destinataire, mais aucune de ces routes ne vérifie l’établissement.
+
+Les autres listes à clé étrangère ont aussi ces routes sans filtre établissement : `GET /parents/eleve/{id}/parents` et `GET /honoraires/{id}/paiements`. Les reçus n’exposent qu’une recherche par paiement (`GET /recus/paiement/{id}`), sans route de liste globale ni filtre établissement.
+
+Ces routes nécessitent une évolution backend pour accepter et appliquer un filtre d’établissement dérivé de la session authentifiée (ou une politique équivalente fondée sur le JWT). Les filtres React ne remplacent pas ce contrôle serveur. Les listes principales paginées utilisent des pages de 100 lignes sur les quatre routes qui exposent `skip`/`limit`. Les listes déroulantes qui appellent ces routes sans pagination (`getUtilisateurs`, `getEleves`, `getEnseignants`) restent limitées aux 100 premières lignes ; Cartes scolaires demande au plus 500 élèves. L’API devra aussi fournir un chargement paginé adapté aux sélecteurs. Le frontend refuse désormais une session (y compris une session legacy) sans identifiant d’établissement valide, afin d’éviter notamment que `/dashboard/` retombe sur sa valeur par défaut `id_etablissement=2`.

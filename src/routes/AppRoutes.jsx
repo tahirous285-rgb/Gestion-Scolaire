@@ -56,7 +56,8 @@ function PublicOnlyRoute({ children }) {
 }
 
 export default function AppRoutes() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, session } = useAuth();
+  const sessionKey = `${session?.id_etablissement || ""}:${session?.id_utilisateur || ""}:${session?.access_token || ""}`;
 
   return (
     <Routes>
@@ -73,7 +74,7 @@ export default function AppRoutes() {
         path="/"
         element={
           <ProtectedRoute>
-            <DashboardLayout />
+            <DashboardLayout key={sessionKey} />
           </ProtectedRoute>
         }
       >

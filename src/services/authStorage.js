@@ -26,7 +26,14 @@ export function getSession() {
       clearSession();
       return null;
     }
-    return stored;
+    const idEtablissement = Number(
+      stored.id_etablissement ?? localStorage.getItem("id_etablissement"),
+    );
+    if (!Number.isInteger(idEtablissement) || idEtablissement <= 0) {
+      clearSession();
+      return null;
+    }
+    return { ...stored, id_etablissement: idEtablissement };
   }
 
   // Compatibilité avec les anciennes clés utilisées par le frontend.
@@ -37,10 +44,16 @@ export function getSession() {
     return null;
   }
 
+  const idEtablissement = Number(localStorage.getItem("id_etablissement"));
+  if (!Number.isInteger(idEtablissement) || idEtablissement <= 0) {
+    clearSession();
+    return null;
+  }
+
   return {
     access_token: token,
     token_type: localStorage.getItem("token_type") || "bearer",
-    id_etablissement: Number(localStorage.getItem("id_etablissement")) || null,
+    id_etablissement: idEtablissement,
     id_utilisateur: Number(localStorage.getItem("id_utilisateur")) || null,
     id_role: Number(localStorage.getItem("id_role")) || null,
     nom: localStorage.getItem("nom") || "",
