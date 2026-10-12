@@ -15,6 +15,7 @@ function labelOf(value) {
 function csvCell(value) {
   if (value === null || value === undefined) return '""';
   let text;
+  const isNumericValue = typeof value === "number";
 
   if (typeof value === "boolean") {
     text = value ? "Oui" : "Non";
@@ -25,8 +26,8 @@ function csvCell(value) {
   }
 
   // Évite d’exporter une photo en base64 et protège les tableurs des formules CSV.
-  if (/^data:image\//i.test(text)) text = "Photo enregistrée";
-  if (/^[\t\r ]*[=+\-@]/.test(text)) text = "'" + text;
+  if (/^data:image\\//i.test(text)) text = "Photo enregistrée";
+  if (!isNumericValue && /^[\\t\\r ]*[=+\\-@]/.test(text)) text = "'" + text;
   return '"' + text.replace(/"/g, '""') + '"';
 }
 
