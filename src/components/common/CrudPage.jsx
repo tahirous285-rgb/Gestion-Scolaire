@@ -12,6 +12,24 @@ function labelOf(value) {
   return String(value);
 }
 
+function csvCell(value) {
+  if (value === null || value === undefined) return '""';
+  let text;
+
+  if (typeof value === "boolean") {
+    text = value ? "Oui" : "Non";
+  } else if (typeof value === "object") {
+    text = JSON.stringify(value);
+  } else {
+    text = String(value);
+  }
+
+  // Évite d’exporter une photo en base64 et protège les tableurs des formules CSV.
+  if (/^data:image\//i.test(text)) text = "Photo enregistrée";
+  if (/^[\t\r ]*[=+\-@]/.test(text)) text = "'" + text;
+  return '"' + text.replace(/"/g, '""') + '"';
+}
+
 function serializeValue(field, value) {
   if (field.type === "number" || field.name.startsWith("id_")) {
     if (value === "" || value === null || value === undefined) return null;
@@ -360,6 +378,41 @@ export default function CrudPage({
     }
   }
 
+  function exportVisibleCsv() {
+    if (filtered.length === 0 || columns.length === 0) return;
+
+    const lines = [
+      columns.map((column) => csvCell(column.label)).join(";"),
+      ...filtered.map((row) =>
+        columns
+          .map((column) => {
+            const value = typeof column.exportValue === "function"
+              ? column.exportValue(row)
+              : valueFor(row, column.key);
+            return csvCell(value);
+          })
+          .join(";"),
+      ),
+    ];
+    const csv = "\\uFEFF" + lines.join("\\r\\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    const fileSlug = (title || "donnees")
+      .normalize("NFD")
+      .replace(/[\\u0300-\\u036f]/g, "")
+      .replace(/[^a-zA-Z0-9]+/g, "-")
+      .replace(/^-|-$/g, "")
+      .toLowerCase();
+
+    link.href = url;
+    link.download = (fileSlug || "donnees") + "-" + new Date().toISOString().slice(0, 10) + ".csv";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
   const activeFields = selected ? editFields : createFields;
 
   return (
@@ -397,14 +450,35 @@ export default function CrudPage({
           <input
             className="crud-search"
             value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder={`Rechercher dans ${title.toLowerCase()}...`}
-            aria-label={`Rechercher dans ${title}`}
+            onChange={(event) => {
+              setSearch(event.target.value);
+              if (pageSize) setPage(0);
+            }}
+            placeholder={pageSize
+              ? "Rechercher dans les résultats de la page..."
+              : "Rechercher dans " + title.toLowerCase() + "..."}
+            aria-label={"Rechercher dans " + title}
           />
         </label>
-        <button className="crud-secondary" type="button" onClick={refresh} disabled={loading}>
-          ↻ Actualiser
-        </button>
+        <div className="crud-toolbar-actions">
+          <span className="crud-results-meta" role="status">
+            {loading
+              ? "Chargement…"
+              : filtered.length + " résultat(s) affiché(s)" + (pageSize ? " · page " + (page + 1) : "")}
+          </span>
+          <button
+            className="crud-secondary"
+            type="button"
+            onClick={exportVisibleCsv}
+            disabled={loading || filtered.length === 0}
+            title="Exporter uniquement les résultats affichés dans ce tableau."
+          >
+            ↓ Exporter CSV
+          </button>
+          <button className="crud-secondary" type="button" onClick={refresh} disabled={loading}>
+            <span aria-hidden="true">↻</span> Actualiser
+          </button>
+        </div>
       </div>
 
       <div className="crud-table-card">
