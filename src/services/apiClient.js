@@ -133,7 +133,8 @@ export function userId() {
 
 export function authHeader() {
   const token = getAccessToken();
-  return token ? `Bearer ${token}` : null;
+  if (!token) return null;
+  return `${getSession()?.token_type || "bearer"} ${token}`;
 }
 
 // Alias conservé pour les modules qui utilisaient déjà apiFetch.

@@ -145,7 +145,6 @@ export default function Recus() {
           <p>Retrouvez un reçu à partir de l’identifiant du paiement, puis imprimez-le depuis votre navigateur.</p>
         </div>
       </div>
-
       <section className="inline-panel receipt-search-panel" aria-labelledby="receipt-search-title">
         <div className="inline-panel-heading">
           <div>

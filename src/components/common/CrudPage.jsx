@@ -32,6 +32,12 @@ function serializeForm(form, fields) {
   }, {});
 }
 
+function errorMessageFor(requestError, fallback, formatter) {
+  return formatter
+    ? formatter(requestError, fallback)
+    : requestError.message || fallback;
+}
+
 function Field({ field, value, onChange, disabled, imageLoading = false }) {
   const fileInputRef = useRef(null);
   const common = {
@@ -152,6 +158,7 @@ export default function CrudPage({
   canCreate = Boolean(create),
   canUpdate = Boolean(update),
   canDelete = Boolean(remove),
+  canView = Boolean(update || remove),
   rowKey = "id",
   createLabel = "Nouveau",
   emptyText = "Aucune donnée.",
@@ -161,6 +168,8 @@ export default function CrudPage({
   initialForm = {},
   normalize = (row) => row,
   onLoaded,
+  onSuccess,
+  formatError,
   pagination = null,
 }) {
   const [rows, setRows] = useState([]);
@@ -171,10 +180,13 @@ export default function CrudPage({
   const [selected, setSelected] = useState(null);
   const [menu, setMenu] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [success, setSuccess] = useState("");
   const [readingPhoto, setReadingPhoto] = useState(false);
   const [actionBusy, setActionBusy] = useState(null);
   const photoReadRequestRef = useRef(0);
   const photoReadInProgressRef = useRef(false);
+  const submitInProgressRef = useRef(false);
+  const mountedRef = useRef(false);
   const [page, setPage] = useState(0);
   const [hasNextPage, setHasNextPage] = useState(false);
   const pageSize = pagination?.pageSize || null;
@@ -184,6 +196,16 @@ export default function CrudPage({
   const [requestLoader] = useState(() => load);
   const [rowNormalizer] = useState(() => normalize);
   const [loadedCallback] = useState(() => onLoaded);
+  const [successCallback] = useState(() => onSuccess);
+  const [errorFormatter] = useState(() => formatError);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      photoReadRequestRef.current += 1;
+    };
+  }, []);
 
   const refresh = useCallback(async () => {
     try {
@@ -193,17 +215,20 @@ export default function CrudPage({
         ? await requestLoader({ skip: page * pageSize, limit: pageSize })
         : await requestLoader();
       const nextRows = Array.isArray(data) ? data.map(rowNormalizer) : [];
+      if (!mountedRef.current) return nextRows;
       setRows(nextRows);
       setHasNextPage(Boolean(pageSize && nextRows.length === pageSize));
       loadedCallback?.(nextRows);
       return nextRows;
     } catch (requestError) {
-      setError(requestError.message || "Erreur de chargement.");
+      if (mountedRef.current) {
+        setError(errorMessageFor(requestError, "Erreur de chargement.", errorFormatter));
+      }
       return [];
     } finally {
-      setLoading(false);
+      if (mountedRef.current) setLoading(false);
     }
-  }, [requestLoader, rowNormalizer, loadedCallback, page, pageSize]);
+  }, [requestLoader, rowNormalizer, loadedCallback, page, pageSize, errorFormatter]);
 
   useEffect(() => {
     // Chargement initial et changement de page : l’effet synchronise la table avec l’API.
@@ -300,29 +325,44 @@ export default function CrudPage({
 
   async function submit(event) {
     event.preventDefault();
+    if (submitInProgressRef.current) return;
     if (photoReadInProgressRef.current) {
       setError("Attendez la fin du traitement de la photo avant d’enregistrer l’élève.");
       return;
     }
+    submitInProgressRef.current = true;
     try {
       setSaving(true);
       setError("");
+      setSuccess("");
+      let action = null;
       if (selected && update) {
         const payload = serializeForm(form, editFields);
         await update(
           selected[rowKey],
           updatePayload ? updatePayload(payload, selected) : payload,
         );
+        action = "update";
       } else if (create) {
         const payload = serializeForm(form, createFields);
         await create(createPayload ? createPayload(payload) : payload);
+        action = "create";
+      }
+      if (!mountedRef.current) return;
+      if (action) {
+        const message = successCallback?.(action);
+        if (typeof message === "string") setSuccess(message);
       }
       await refresh();
+      if (!mountedRef.current) return;
       closeModal(true);
     } catch (requestError) {
-      setError(requestError.message || "Erreur d'enregistrement.");
+      if (mountedRef.current) {
+        setError(errorMessageFor(requestError, "Erreur d'enregistrement.", errorFormatter));
+      }
     } finally {
-      setSaving(false);
+      submitInProgressRef.current = false;
+      if (mountedRef.current) setSaving(false);
     }
   }
 
@@ -334,13 +374,19 @@ export default function CrudPage({
     try {
       setActionBusy(actionId);
       setError("");
+      setSuccess("");
       await remove(actionId);
+      if (!mountedRef.current) return;
       setMenu(null);
+      const message = successCallback?.("delete");
+      if (typeof message === "string") setSuccess(message);
       await refresh();
     } catch (requestError) {
-      setError(requestError.message || "Suppression impossible.");
+      if (mountedRef.current) {
+        setError(errorMessageFor(requestError, "Suppression impossible.", errorFormatter));
+      }
     } finally {
-      setActionBusy(null);
+      if (mountedRef.current) setActionBusy(null);
     }
   }
 
@@ -350,13 +396,17 @@ export default function CrudPage({
     try {
       setActionBusy(actionId);
       setError("");
+      setSuccess("");
       await action(row);
+      if (!mountedRef.current) return;
       setMenu(null);
       await refresh();
     } catch (requestError) {
-      setError(requestError.message || "Action impossible.");
+      if (mountedRef.current) {
+        setError(errorMessageFor(requestError, "Action impossible.", errorFormatter));
+      }
     } finally {
-      setActionBusy(null);
+      if (mountedRef.current) setActionBusy(null);
     }
   }
 
@@ -390,6 +440,7 @@ export default function CrudPage({
           </button>
         </div>
       )}
+      {success && <div className="success-message" role="status">✓ {success}</div>}
 
       <div className="crud-toolbar">
         <label className="crud-search-wrap">
@@ -429,7 +480,7 @@ export default function CrudPage({
                   {columns.map((column) => (
                     <th key={column.key}>{column.label}</th>
                   ))}
-                  {(canUpdate || canDelete || extraActions) && <th>Actions</th>}
+                  {(canView || canUpdate || canDelete || extraActions) && <th>Actions</th>}
                 </tr>
               </thead>
               <tbody>
@@ -442,7 +493,7 @@ export default function CrudPage({
                           : labelOf(valueFor(row, column.key))}
                       </td>
                     ))}
-                    {(canUpdate || canDelete || extraActions) && (
+                    {(canView || canUpdate || canDelete || extraActions) && (
                       <td className="crud-actions">
                         <button
                           className="crud-menu-btn"
@@ -455,16 +506,18 @@ export default function CrudPage({
                         </button>
                         {menu === row[rowKey] && (
                           <div className="crud-menu">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setSelected(row);
-                                setModal("view");
-                                setMenu(null);
-                              }}
-                            >
-                              👁 Consulter
-                            </button>
+                            {canView && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSelected(row);
+                                  setModal("view");
+                                  setMenu(null);
+                                }}
+                              >
+                                👁 Consulter
+                              </button>
+                            )}
                             {canUpdate && (
                               <button type="button" onClick={() => openEdit(row)}>
                                 ✏ Modifier
