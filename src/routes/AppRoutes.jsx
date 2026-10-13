@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { Link, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import DashboardLayout from "../layouts/DashboardLayout";
 
@@ -44,19 +44,48 @@ import Annonces from "../pages/annonces/Annonces";
 import Messages from "../pages/messages/Messages";
 import Notifications from "../pages/notifications/Notifications";
 
+function AuthGate({ error, onRetry }) {
+  return (
+    <main className="auth-gate" aria-live="polite">
+      <section className="auth-gate-card">
+        {error ? (
+          <>
+            <h1>Session non vérifiée</h1>
+            <p role="alert">
+              L’accès privé reste bloqué car le serveur n’a pas pu vérifier la session.
+              {error ? ` ${error}` : ""}
+            </p>
+            <div className="auth-gate-actions">
+              <button className="crud-primary" type="button" onClick={onRetry}>Réessayer</button>
+              <Link to="/login">Aller à la connexion</Link>
+            </div>
+          </>
+        ) : (
+          <p role="status">Vérification de la session auprès du serveur…</p>
+        )}
+      </section>
+    </main>
+  );
+}
+
 function ProtectedRoute({ children }) {
-  const { isAuthenticated } = useAuth();
+  const { authStatus, authError, retryVerification } = useAuth();
   const location = useLocation();
-  return isAuthenticated ? children : <Navigate to="/login" replace state={{ from: location }} />;
+  if (authStatus === "checking") return <AuthGate />;
+  if (authStatus === "error") return <AuthGate error={authError} onRetry={retryVerification} />;
+  return authStatus === "authenticated"
+    ? children
+    : <Navigate to="/login" replace state={{ from: location }} />;
 }
 
 function PublicOnlyRoute({ children }) {
-  const { isAuthenticated } = useAuth();
-  return isAuthenticated ? <Navigate to="/dashboard" replace /> : children;
+  const { authStatus } = useAuth();
+  if (authStatus === "checking") return <AuthGate />;
+  return authStatus === "authenticated" ? <Navigate to="/dashboard" replace /> : children;
 }
 
 export default function AppRoutes() {
-  const { isAuthenticated, session } = useAuth();
+  const { authStatus, session, authError, retryVerification } = useAuth();
   const sessionKey = `${session?.id_etablissement || ""}:${session?.id_utilisateur || ""}:${session?.access_token || ""}`;
 
   return (
@@ -121,7 +150,14 @@ export default function AppRoutes() {
         <Route path="notifications" element={<Notifications />} />
       </Route>
 
-      <Route path="*" element={<Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />} />
+      <Route
+        path="*"
+        element={
+          authStatus === "checking" ? <AuthGate />
+            : authStatus === "error" ? <AuthGate error={authError} onRetry={retryVerification} />
+              : <Navigate to={authStatus === "authenticated" ? "/dashboard" : "/login"} replace />
+        }
+      />
     </Routes>
   );
 }
