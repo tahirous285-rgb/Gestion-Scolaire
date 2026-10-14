@@ -21,6 +21,7 @@ const pageTitles = {
   "/cours-effectues": "Cours effectués",
   "/observations-enseignants": "Observations enseignants",
   "/honoraires": "Honoraires",
+  "/caisse": "Caisse",
   "/paiements-honoraires": "Paiements honoraires",
   "/frais": "Frais scolaires",
   "/paiements": "Paiements scolaires",

@@ -51,6 +51,7 @@ const sections = [
   {
     label: "FINANCES",
     items: [
+      ["/caisse", "Caisse", Wallet],
       ["/honoraires", "Honoraires", Banknote],
       ["/paiements-honoraires", "Paiements honoraires", Receipt],
       ["/frais", "Frais scolaires", Wallet],

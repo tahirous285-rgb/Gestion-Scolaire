@@ -38,6 +38,7 @@ import FraisScolaires from "../pages/frais/FraisScolaires";
 import Paiements from "../pages/paiements/Paiements";
 import Recus from "../pages/recus/Recus";
 import Depenses from "../pages/depenses/Depenses";
+import Caisse from "../pages/caisse/Caisse";
 
 import CartesScolaires from "../pages/cartes/CartesScolaires";
 import Annonces from "../pages/annonces/Annonces";
@@ -143,6 +144,7 @@ export default function AppRoutes() {
         <Route path="paiements" element={<Paiements />} />
         <Route path="recus" element={<Recus />} />
         <Route path="depenses" element={<Depenses />} />
+        <Route path="caisse" element={<Caisse />} />
 
         <Route path="cartes" element={<CartesScolaires />} />
         <Route path="annonces" element={<Annonces />} />
