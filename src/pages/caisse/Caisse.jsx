@@ -1,22 +1,123 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowDownLeft, ArrowUpRight, CalendarDays, Check, CircleAlert, Clock3, RotateCw, Wallet } from "lucide-react";
+import {
+  ArrowDownLeft, ArrowLeftRight, ArrowUpRight, CalendarDays, CircleAlert,
+  Clock3, RefreshCw, Search, Wallet,
+} from "lucide-react";
 import { establishmentId } from "../../services/apiClient";
-import { CAISSE_API_READY, cloturerCaisse, getCaisseClotures, getCaisseMouvements, getCaisseResume, initialiserCaisse, rouvrirCloture } from "../../services/caisseApi";
+import {
+  cloturerCaisse, getCaisseClotures, getCaisseMouvements, getCaisseResume,
+  initialiserCaisse, rouvrirCaisse,
+} from "../../services/caisseApi";
 import { formatDate, formatDateTime, formatMoney } from "../pageUtils";
 import "./Caisse.css";
+
+const field = (record, names) => {
+  for (const name of names) {
+    const value = record?.[name];
+    if (value !== null && value !== undefined && value !== "") return value;
+  }
+  return null;
+};
+
+function collectionFrom(response, keys) {
+  if (Array.isArray(response)) return response;
+  for (const key of keys) {
+    if (Array.isArray(response?.[key])) return response[key];
+  }
+  throw new Error("Format de liste inattendu dans la réponse du serveur.");
+}
 
 function today() {
   const now = new Date();
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
 }
 
-function getRows(value) {
-  return Array.isArray(value) ? value : [];
+function display(value) {
+  return value === null || value === undefined || value === "" ? "—" : String(value);
 }
 
-function ErrorNotice({ children }) {
-  return <div className="caisse-alert" role="alert"><CircleAlert size={18} /> <span>{children}</span></div>;
+function formatMovementSense(value) {
+  const normalized = String(value || "").toLowerCase();
+  if (["entree", "entrée", "in", "credit"].includes(normalized)) return "Entrée";
+  if (["sortie", "out", "debit"].includes(normalized)) return "Sortie";
+  return display(value);
+}
+
+function formatCategory(value) {
+  const normalized = String(value || "").toLowerCase();
+  if (normalized.includes("inscription") || normalized.includes("frais")) return "Frais d’inscription";
+  if (normalized.includes("honoraire")) return "Honoraire";
+  if (normalized.includes("depense") || normalized.includes("dépense")) return "Dépense";
+  return display(value);
+}
+
+function formatApiError(error) {
+  return error?.message || "Une erreur inattendue est survenue.";
+}
+
+async function fetchCaisseData(idEtablissement, queryFilters = {}) {
+  const requests = await Promise.allSettled([
+    getCaisseResume(idEtablissement, queryFilters.date_debut || today()),
+    getCaisseMouvements({
+      id_etablissement: idEtablissement,
+      ...queryFilters,
+    }),
+    getCaisseClotures(idEtablissement),
+  ]);
+  const result = { resume: null, mouvements: [], clotures: [], errors: {} };
+  if (requests[0].status === "fulfilled") {
+    const response = requests[0].value;
+    if (response && typeof response === "object" && !Array.isArray(response)) {
+      result.resume = response;
+    } else {
+      result.errors.resume = "Format de résumé inattendu dans la réponse du serveur.";
+    }
+  } else {
+    result.errors.resume = formatApiError(requests[0].reason);
+  }
+  if (requests[1].status === "fulfilled") {
+    try {
+      result.mouvements = collectionFrom(requests[1].value, ["mouvements", "items", "results"]);
+    } catch (error) {
+      result.errors.mouvements = formatApiError(error);
+    }
+  } else {
+    result.errors.mouvements = formatApiError(requests[1].reason);
+  }
+  if (requests[2].status === "fulfilled") {
+    try {
+      result.clotures = collectionFrom(requests[2].value, ["clotures", "items", "results"]);
+    } catch (error) {
+      result.errors.clotures = formatApiError(error);
+    }
+  } else {
+    result.errors.clotures = formatApiError(requests[2].reason);
+  }
+  return result;
+}
+
+function movementSearchText(row) {
+  return [
+    field(row, ["date_mouvement", "date_operation", "date"]),
+    field(row, ["sens", "type_mouvement"]),
+    field(row, ["libelle", "description", "motif"]),
+    field(row, ["reference", "reference_operation", "numero_reference", "source_id"]),
+    field(row, ["categorie", "category", "type_operation"]),
+    field(row, ["montant"]),
+    field(row, ["mode_paiement", "mode"]),
+    field(row, ["utilisateur", "responsable", "nom_utilisateur", "utilisateur_nom", "id_utilisateur"]),
+  ].filter(Boolean).join(" ").toLocaleLowerCase("fr");
+}
+
+function StatCard({ label, value, icon: Icon, kind }) {
+  return (
+    <article className={`caisse-stat ${kind || ""}`}>
+      <div className="caisse-stat-icon"><Icon size={19} /></div>
+      <span>{label}</span>
+      <strong>{value}</strong>
+    </article>
+  );
 }
 
 export default function Caisse() {
@@ -24,262 +125,320 @@ export default function Caisse() {
   const [resume, setResume] = useState(null);
   const [mouvements, setMouvements] = useState([]);
   const [clotures, setClotures] = useState([]);
-  const [filters, setFilters] = useState({ date_debut: today(), date_fin: today(), sens: "" });
-  const [initialForm, setInitialForm] = useState({ solde_initial: "", date_debut_suivi: today() });
-  const [clotureForm, setClotureForm] = useState({ date_cloture: today(), solde_compte: "", commentaire: "" });
-  const [reopenId, setReopenId] = useState(null);
-  const [reopenReason, setReopenReason] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
-  const [notice, setNotice] = useState("");
-
-  const fetchData = useCallback(async () => {
-    if (!CAISSE_API_READY || !idEtablissement) return null;
-    const [nextResume, nextMouvements, nextClotures] = await Promise.all([
-        getCaisseResume(idEtablissement, filters.date_debut),
-        getCaisseMouvements({ id_etablissement: idEtablissement, ...filters }),
-        getCaisseClotures(idEtablissement),
-    ]);
-    return { nextResume, nextMouvements, nextClotures };
-  }, [filters, idEtablissement]);
-
-  const loadData = useCallback(async () => {
-    if (!CAISSE_API_READY || !idEtablissement) return;
-    setLoading(true); 
-    try {
-      const data = await fetchData();
-      if (!data) return;
-      setResume(data.nextResume);
-      setMouvements(getRows(data.nextMouvements));
-      setClotures(getRows(data.nextClotures));
-      setError("");
-    } catch (requestError) {
-      setResume(null);
-      setMouvements([]);
-      setClotures([]);
-      setError(requestError.message || "Impossible de charger les données de caisse.");
-    } finally {
-      setLoading(false);
-    }
-  }, [fetchData, idEtablissement]);
+  const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(Boolean(idEtablissement));
+  const [refreshing, setRefreshing] = useState(false);
+  const [filters, setFilters] = useState({ date_debut: "", date_fin: "", sens: "" });
+  const [search, setSearch] = useState("");
+  const [dateDebutSuivi, setDateDebutSuivi] = useState(today());
+  const [soldeInitial, setSoldeInitial] = useState("");
+  const [soldeCompte, setSoldeCompte] = useState("");
+  const [commentaire, setCommentaire] = useState("");
+  const [motifReouverture, setMotifReouverture] = useState("");
+  const [reouvertureId, setReouvertureId] = useState(null);
+  const [busy, setBusy] = useState("");
+  const [success, setSuccess] = useState("");
+  const [actionError, setActionError] = useState("");
 
   useEffect(() => {
-    if (!CAISSE_API_READY) return undefined;
     let active = true;
-    fetchData().then((data) => {
-      if (!active || !data) return;
-      setResume(data.nextResume);
-      setMouvements(getRows(data.nextMouvements));
-      setClotures(getRows(data.nextClotures));
-      setError("");
-    }).catch((requestError) => {
+    async function loadInitialData() {
+      if (!idEtablissement) return;
+      const data = await fetchCaisseData(idEtablissement);
       if (!active) return;
-      setResume(null);
-      setMouvements([]);
-      setClotures([]);
-      setError(requestError.message || "Impossible de charger les données de caisse.");
-    }).finally(() => {
-      if (active) setLoading(false);
-    });
+      setResume(data.resume);
+      setMouvements(data.mouvements);
+      setClotures(data.clotures);
+      setErrors(data.errors);
+      setLoading(false);
+    }
+    loadInitialData();
     return () => { active = false; };
-  }, [fetchData]);
+  }, [idEtablissement]);
 
-  async function submitMutation(action, successMessage) {
-    setSaving(true);
-    setLoading(true);
-    setError("");
-    setNotice("");
+  const refresh = useCallback(async (queryFilters = filters) => {
+    if (!idEtablissement) return;
+    setRefreshing(true);
+    setErrors({});
+    const data = await fetchCaisseData(idEtablissement, queryFilters);
+    setResume(data.resume);
+    setMouvements(data.mouvements);
+    setClotures(data.clotures);
+    setErrors(data.errors);
+    setLoading(false);
+    setRefreshing(false);
+  }, [filters, idEtablissement]);
+
+  const filteredMouvements = useMemo(() => {
+    const term = search.trim().toLocaleLowerCase("fr");
+    return mouvements.filter((row) => !term || movementSearchText(row).includes(term));
+  }, [mouvements, search]);
+
+  const initializedValue = field(resume, [
+    "initialisee", "caisse_initialisee", "est_initialisee", "is_initialisee",
+  ]);
+  const isInitialized = initializedValue === true || initializedValue === 1;
+  const isNotInitialized = initializedValue === false || initializedValue === 0;
+  const theoreticalBalance = field(resume, [
+    "solde_theorique_actuel", "solde_theorique", "solde_actuel",
+  ]);
+
+  async function handleInitialize(event) {
+    event.preventDefault();
+    if (!idEtablissement || !window.confirm("Confirmer l’initialisation de la caisse ? Cette opération ne pourra pas être répétée depuis cette page.")) return;
+    setBusy("initialisation");
+    setActionError("");
+    setSuccess("");
     try {
-      await action();
-      setNotice(successMessage);
-      await loadData();
-      return true;
-    } catch (requestError) {
-      setError(requestError.message || "L’opération n’a pas pu être enregistrée.");
-      return false;
+      await initialiserCaisse({
+        id_etablissement: idEtablissement,
+        solde_initial: Number(soldeInitial),
+        date_debut_suivi: dateDebutSuivi,
+      });
+      setSoldeInitial("");
+      setSuccess("La caisse a été initialisée.");
+      await refresh();
+    } catch (error) {
+      setActionError(formatApiError(error));
     } finally {
-      setSaving(false);
+      setBusy("");
     }
   }
 
-  function handleInitialise(event) {
+  async function handleClose(event) {
     event.preventDefault();
-    if (Number(initialForm.solde_initial) < 0 || initialForm.solde_initial === "") {
-      setError("Le solde initial doit être un montant positif ou nul.");
+    if (!idEtablissement) return;
+    setBusy("cloture");
+    setActionError("");
+    setSuccess("");
+    try {
+      await cloturerCaisse({
+        id_etablissement: idEtablissement,
+        date_cloture: today(),
+        solde_compte: Number(soldeCompte),
+        commentaire: commentaire.trim() || null,
+      });
+      setSoldeCompte("");
+      setCommentaire("");
+      setSuccess("La clôture de caisse a été enregistrée.");
+      await refresh();
+    } catch (error) {
+      setActionError(formatApiError(error));
+    } finally {
+      setBusy("");
+    }
+  }
+
+  async function handleReopen(event, closureId) {
+    event.preventDefault();
+    const reason = motifReouverture.trim();
+    if (!reason) {
+      setActionError("Le motif de réouverture est obligatoire.");
       return;
     }
-    submitMutation(() => initialiserCaisse({
-      id_etablissement: idEtablissement,
-      solde_initial: Number(initialForm.solde_initial),
-      date_debut_suivi: initialForm.date_debut_suivi,
-    }), "La caisse a été initialisée.");
-  }
-
-  function handleClose(event) {
-    event.preventDefault();
-    if (Number(clotureForm.solde_compte) < 0 || clotureForm.solde_compte === "") {
-      setError("Le montant physiquement compté doit être un montant positif ou nul.");
-      return;
+    if (!window.confirm("Confirmer la réouverture de cette clôture ?")) return;
+    setBusy("reouverture");
+    setActionError("");
+    setSuccess("");
+    try {
+      await rouvrirCaisse(closureId, reason);
+      setMotifReouverture("");
+      setReouvertureId(null);
+      setSuccess("La réouverture a été enregistrée.");
+      await refresh();
+    } catch (error) {
+      setActionError(formatApiError(error));
+    } finally {
+      setBusy("");
     }
-    submitMutation(() => cloturerCaisse({
-      id_etablissement: idEtablissement,
-      date_cloture: clotureForm.date_cloture,
-      solde_compte: Number(clotureForm.solde_compte),
-      commentaire: clotureForm.commentaire,
-    }), "La clôture a été enregistrée.");
   }
 
-  function handleReopen(event, id) {
+  function applyFilters(event) {
     event.preventDefault();
-    const motif = reopenReason.trim();
-    if (!motif) {
-      setError("Un motif est obligatoire pour rouvrir une clôture.");
-      return;
-    }
-    submitMutation(() => rouvrirCloture(id, { motif_reouverture: motif }), "La clôture a été rouverte.").then((success) => {
-      if (success) {
-        setReopenId(null);
-        setReopenReason("");
-      }
-    });
-  }
-
-  const initialized = resume?.initialisee === true;
-  const isLoading = Boolean(idEtablissement) && loading;
-  const noResume = !isLoading && !error && resume === null;
-
-  if (!CAISSE_API_READY) {
-    return (
-      <main className="caisse-page">
-        <header className="caisse-heading">
-          <div><p className="caisse-eyebrow">FINANCES / TRÉSORERIE</p><h1>Caisse</h1><p className="caisse-subtitle">Le module attend la mise à disposition de son API Backend.</p></div>
-        </header>
-        <ErrorNotice>Les routes Backend <strong>/api/v1/caisse/...</strong> ne sont pas encore enregistrées dans cette branche. Aucun appel n’est envoyé et aucun solde fictif n’est affiché. Les opérations restent disponibles dans leurs modules actuels.</ErrorNotice>
-        <nav className="caisse-source-links" aria-label="Modules financiers existants">
-          <strong>Modules financiers</strong>
-          <Link to="/paiements">Paiements scolaires</Link><Link to="/frais">Frais scolaires</Link><Link to="/paiements-honoraires">Paiements d’honoraires</Link><Link to="/honoraires">Honoraires</Link><Link to="/depenses">Dépenses</Link>
-        </nav>
-      </main>
-    );
+    refresh(filters);
   }
 
   return (
     <main className="caisse-page">
-      <header className="caisse-heading">
+      <header className="caisse-header">
         <div>
-          <p className="caisse-eyebrow">FINANCES / TRÉSORERIE</p>
+          <p className="caisse-eyebrow">FINANCES · SUIVI DES FLUX</p>
           <h1>Caisse</h1>
-          <p className="caisse-subtitle">Solde physique et journal des opérations en espèces.</p>
+          <p>Journal centralisé des mouvements effectivement encaissés ou réglés en espèces.</p>
         </div>
-        <button className="crud-secondary caisse-refresh" type="button" onClick={() => { setLoading(true); loadData(); }} disabled={loading}>
-          <RotateCw size={16} /> Actualiser
+        <button className="caisse-button secondary" type="button" onClick={() => refresh()} disabled={refreshing}>
+          <RefreshCw size={16} className={refreshing ? "caisse-spin" : ""} />
+          {refreshing ? "Actualisation…" : "Actualiser"}
         </button>
       </header>
 
-      {!idEtablissement && <ErrorNotice>Aucun établissement n’est associé à la session. Reconnectez-vous ou contactez un administrateur.</ErrorNotice>}
-      {error && <ErrorNotice>{error}</ErrorNotice>}
-      {notice && <div className="caisse-success" role="status"><Check size={17} />{notice}</div>}
-      {noResume && <ErrorNotice>Le serveur n’a pas retourné le résumé de caisse attendu. Vérifiez le contrat API Backend.</ErrorNotice>}
+      {!idEtablissement && <div className="caisse-alert error" role="alert">Aucun établissement n’est associé à la session. La caisse ne peut pas être chargée.</div>}
+      {actionError && <div className="caisse-alert error" role="alert"><CircleAlert size={17} />{actionError}</div>}
+      {success && <div className="caisse-alert success" role="status">{success}</div>}
 
-      <section className="caisse-metrics" aria-label="Résumé de caisse">
-        <article className="caisse-metric caisse-metric-balance">
-          <span className="caisse-metric-label"><Wallet size={16} /> Solde théorique</span>
-          <strong>{isLoading ? "Chargement…" : formatMoney(resume?.solde_theorique)}</strong>
-          <small>{initialized ? `Suivi depuis le ${formatDate(resume.date_debut_suivi)}` : "Caisse non initialisée"}</small>
-        </article>
-        <article className="caisse-metric caisse-metric-in">
-          <span className="caisse-metric-label"><ArrowDownLeft size={16} /> Entrées le {formatDate(filters.date_debut)}</span>
-          <strong>{isLoading ? "Chargement…" : formatMoney(resume?.total_entrees_jour)}</strong>
-          <small>Total communiqué par l’API</small>
-        </article>
-        <article className="caisse-metric caisse-metric-out">
-          <span className="caisse-metric-label"><ArrowUpRight size={16} /> Sorties le {formatDate(filters.date_debut)}</span>
-          <strong>{isLoading ? "Chargement…" : formatMoney(resume?.total_sorties_jour)}</strong>
-          <small>Total communiqué par l’API</small>
-        </article>
-        <article className="caisse-metric caisse-metric-state">
-          <span className="caisse-metric-label"><Clock3 size={16} /> État</span>
-          <strong>{isLoading ? "Chargement…" : initialized ? "Initialisée" : "À initialiser"}</strong>
-          <small>{initialized ? `Début : ${formatDate(resume.date_debut_suivi)}` : "Saisir le fonds de départ"}</small>
-        </article>
+      <section className="caisse-stats" aria-label="Résumé de la caisse">
+        <StatCard label="Solde théorique actuel" value={formatMoney(theoreticalBalance)} icon={Wallet} kind="balance" />
+        <StatCard label="Entrées du jour" value={formatMoney(field(resume, ["entrees_jour", "total_entrees_jour", "entrees_du_jour"]))} icon={ArrowDownLeft} kind="incoming" />
+        <StatCard label="Sorties du jour" value={formatMoney(field(resume, ["sorties_jour", "total_sorties_jour", "sorties_du_jour"]))} icon={ArrowUpRight} kind="outgoing" />
+        <StatCard label="Début du suivi" value={formatDate(field(resume, ["date_debut_suivi"]))} icon={CalendarDays} />
       </section>
 
-      {!loading && !error && resume && !initialized && (
-        <section className="caisse-panel caisse-init-panel">
-          <div className="caisse-section-title"><div><span className="caisse-eyebrow">MISE EN SERVICE</span><h2>Initialiser la caisse</h2></div></div>
-          <form className="caisse-form caisse-form-inline" onSubmit={handleInitialise}>
-            <label>Solde initial (FCFA)<input type="number" min="0" step="1" required value={initialForm.solde_initial} onChange={(event) => setInitialForm({ ...initialForm, solde_initial: event.target.value })} /></label>
-            <label>Date de début du suivi<input type="date" required value={initialForm.date_debut_suivi} onChange={(event) => setInitialForm({ ...initialForm, date_debut_suivi: event.target.value })} /></label>
-            <button className="crud-primary" type="submit" disabled={saving}><Check size={16} /> Initialiser</button>
+      {loading && <div className="caisse-loading" role="status">Chargement des données de caisse…</div>}
+      {errors.resume && <div className="caisse-alert error" role="alert">Résumé : {errors.resume}</div>}
+      {resume && (
+        <div className={`caisse-status ${isInitialized ? "initialized" : isNotInitialized ? "not-initialized" : "unknown"}`}>
+          <span className="caisse-status-mark" aria-hidden="true">{isInitialized ? "✓" : isNotInitialized ? "!" : "?"}</span>
+          <div>
+            <strong>{isInitialized ? "Caisse initialisée" : isNotInitialized ? "Caisse non initialisée" : "État d’initialisation non communiqué"}</strong>
+            <span>{isInitialized ? "Le suivi des opérations est actif." : isNotInitialized ? "Renseignez le solde de départ et la date de début du suivi." : "La réponse du résumé ne précise pas le statut d’initialisation."}</span>
+          </div>
+        </div>
+      )}
+
+      {isNotInitialized && (
+        <section className="caisse-panel">
+          <div className="caisse-panel-heading">
+            <div><p className="caisse-eyebrow">MISE EN SERVICE</p><h2>Initialiser la caisse</h2></div>
+          </div>
+          <form className="caisse-form" onSubmit={handleInitialize}>
+            <label>Solde initial (FCFA)
+              <input type="number" min="0" step="0.01" required value={soldeInitial} onChange={(event) => setSoldeInitial(event.target.value)} />
+            </label>
+            <label>Date de début du suivi
+              <input type="date" required value={dateDebutSuivi} onChange={(event) => setDateDebutSuivi(event.target.value)} />
+            </label>
+            <button className="caisse-button primary" type="submit" disabled={busy === "initialisation"}>
+              {busy === "initialisation" ? "Initialisation…" : "Initialiser la caisse"}
+            </button>
           </form>
         </section>
       )}
 
       <section className="caisse-panel">
-        <div className="caisse-section-title">
-          <div><span className="caisse-eyebrow">MOUVEMENTS</span><h2>Journal de caisse</h2></div>
-          <span className="caisse-count">{mouvements.length} opération(s)</span>
+        <div className="caisse-panel-heading">
+          <div><p className="caisse-eyebrow">JOURNAL CENTRALISÉ</p><h2>Mouvements de caisse</h2></div>
+          <span className="caisse-count">{filteredMouvements.length} mouvement{filteredMouvements.length === 1 ? "" : "s"}</span>
         </div>
-        <div className="caisse-filters">
-          <label><CalendarDays size={15} /> Du<input type="date" value={filters.date_debut} onChange={(event) => { setLoading(true); setFilters({ ...filters, date_debut: event.target.value }); }} /></label>
-          <label><CalendarDays size={15} /> Au<input type="date" value={filters.date_fin} onChange={(event) => { setLoading(true); setFilters({ ...filters, date_fin: event.target.value }); }} /></label>
-          <label>Sens<select value={filters.sens} onChange={(event) => { setLoading(true); setFilters({ ...filters, sens: event.target.value }); }}><option value="">Tous</option><option value="entree">Entrées</option><option value="sortie">Sorties</option></select></label>
-        </div>
-        <div className="caisse-table-wrap">
-          <table className="caisse-table">
-            <thead><tr><th>Date</th><th>Sens</th><th>Catégorie</th><th>Libellé / référence</th><th>Mode</th><th>Utilisateur</th><th className="numeric">Montant</th></tr></thead>
-            <tbody>
-              {loading ? <tr><td colSpan="7" className="caisse-empty">Chargement des mouvements…</td></tr>
-                : mouvements.length === 0 ? <tr><td colSpan="7" className="caisse-empty">Aucun mouvement pour cette période.</td></tr>
-                  : mouvements.map((row) => <tr key={row.id_mouvement_caisse}>
-                    <td>{formatDateTime(row.date_mouvement)}</td>
-                    <td><span className={`caisse-direction ${row.sens === "entree" ? "is-in" : "is-out"}`}>{row.sens === "entree" ? <><ArrowDownLeft size={14} /> Entrée</> : <><ArrowUpRight size={14} /> Sortie</>}</span></td>
-                    <td>{row.categorie || "—"}</td><td>{row.libelle || row.source_id || "—"}</td><td>{row.mode_paiement || "—"}</td><td>{row.id_utilisateur ?? "—"}</td>
-                    <td className={`numeric caisse-amount ${row.sens === "entree" ? "is-in" : "is-out"}`}>{formatMoney(row.montant)}</td>
-                  </tr>)}
-            </tbody>
-          </table>
-        </div>
+        <form className="caisse-filters" onSubmit={applyFilters}>
+          <label>Date de début<input type="date" value={filters.date_debut} onChange={(event) => setFilters({ ...filters, date_debut: event.target.value })} /></label>
+          <label>Date de fin<input type="date" value={filters.date_fin} onChange={(event) => setFilters({ ...filters, date_fin: event.target.value })} /></label>
+          <label>Sens
+            <select value={filters.sens} onChange={(event) => setFilters({ ...filters, sens: event.target.value })}>
+              <option value="">Tous</option><option value="entree">Entrée</option><option value="sortie">Sortie</option>
+            </select>
+          </label>
+          <button className="caisse-button secondary" type="submit" disabled={refreshing}>Appliquer</button>
+          <label className="caisse-search"><Search size={16} /><input type="search" placeholder="Rechercher un mouvement…" value={search} onChange={(event) => setSearch(event.target.value)} /></label>
+        </form>
+        {errors.mouvements && <div className="caisse-alert error" role="alert">Journal : {errors.mouvements}</div>}
+        {!errors.mouvements && !loading && filteredMouvements.length === 0 ? (
+          <div className="caisse-empty"><ArrowLeftRight size={22} /><strong>Aucun mouvement à afficher</strong><span>Les mouvements enregistrés par les modules métier apparaîtront ici.</span></div>
+        ) : !errors.mouvements && (
+          <div className="caisse-table-wrap">
+            <table className="caisse-table">
+              <thead><tr><th>Date</th><th>Sens</th><th>Catégorie</th><th>Libellé / référence</th><th>Montant</th><th>Mode</th><th>Responsable</th></tr></thead>
+              <tbody>{filteredMouvements.map((row, index) => {
+                const sense = field(row, ["sens", "type_mouvement"]);
+                const isEntry = ["entree", "entrée", "in", "credit"].includes(String(sense || "").toLowerCase());
+                const rowId = field(row, ["id_mouvement_caisse", "id_mouvement", "id"]);
+                const sourceType = field(row, ["source_type"]);
+                const sourceId = field(row, ["source_id"]);
+                const userId = field(row, ["id_utilisateur"]);
+                return (
+                  <tr key={rowId ?? `${field(row, ["date_mouvement", "date_operation", "date"])}-${index}`}>
+                    <td>{formatDateTime(field(row, ["date_mouvement", "date_operation", "date"]))}</td>
+                    <td><span className={`caisse-direction ${isEntry ? "entry" : "exit"}`}><span aria-hidden="true">{isEntry ? "＋" : "−"}</span>{formatMovementSense(sense)}</span></td>
+                    <td>{formatCategory(field(row, ["categorie", "category", "type_operation"]))}</td>
+                    <td><strong>{display(field(row, ["libelle", "description", "motif"]))}</strong><small>Source : {display(sourceType)} #{display(sourceId)}</small></td>
+                    <td className="caisse-amount">{formatMoney(field(row, ["montant"]))}</td>
+                    <td>{display(field(row, ["mode_paiement", "mode"]))}</td>
+                    <td>{userId === null ? "—" : `Utilisateur #${userId}`}</td>
+                  </tr>
+                );
+              })}</tbody>
+            </table>
+          </div>
+        )}
       </section>
 
-      <div className="caisse-bottom-grid">
-        <section className="caisse-panel">
-          <div className="caisse-section-title"><div><span className="caisse-eyebrow">FIN DE JOURNÉE</span><h2>Nouvelle clôture</h2></div></div>
-          <form className="caisse-form caisse-close-form" onSubmit={handleClose}>
-            <label>Date de clôture<input type="date" required value={clotureForm.date_cloture} onChange={(event) => setClotureForm({ ...clotureForm, date_cloture: event.target.value })} /></label>
-            <label>Montant physiquement compté (FCFA)<input type="number" min="0" step="1" required value={clotureForm.solde_compte} onChange={(event) => setClotureForm({ ...clotureForm, solde_compte: event.target.value })} /></label>
-            <label>Commentaire<textarea rows="3" value={clotureForm.commentaire} onChange={(event) => setClotureForm({ ...clotureForm, commentaire: event.target.value })} /></label>
-            <button className="crud-primary" type="submit" disabled={saving || !initialized}><Check size={16} /> Enregistrer la clôture</button>
-            {!initialized && <small>Initialisez la caisse avant de créer une clôture.</small>}
+      {isInitialized && (
+        <section className="caisse-panel caisse-close-panel">
+          <div className="caisse-panel-heading">
+            <div><p className="caisse-eyebrow">FIN DE JOURNÉE / PÉRIODE</p><h2>Clôturer la caisse</h2></div>
+          </div>
+          <p className="caisse-helper">Le solde théorique est fourni par le Backend ; saisissez le montant réellement compté.</p>
+          <form className="caisse-form close-form" onSubmit={handleClose}>
+            <label>Montant réellement compté (FCFA)
+              <input type="number" min="0" step="0.01" required value={soldeCompte} onChange={(event) => setSoldeCompte(event.target.value)} />
+            </label>
+            <label className="wide">Commentaire (facultatif)
+              <textarea rows="2" value={commentaire} onChange={(event) => setCommentaire(event.target.value)} />
+            </label>
+            <button className="caisse-button primary" type="submit" disabled={busy === "cloture"}>
+              {busy === "cloture" ? "Enregistrement…" : "Enregistrer la clôture"}
+            </button>
           </form>
         </section>
+      )}
 
-        <section className="caisse-panel">
-          <div className="caisse-section-title"><div><span className="caisse-eyebrow">ARCHIVE</span><h2>Historique des clôtures</h2></div></div>
-          {loading ? <p className="caisse-empty">Chargement des clôtures…</p> : clotures.length === 0 ? <p className="caisse-empty">Aucune clôture enregistrée.</p> : (
-            <div className="caisse-closures">
-              {clotures.map((row) => <article className="caisse-closure" key={row.id_cloture_caisse}>
-                <div className="caisse-closure-top"><strong>{formatDate(row.date_cloture)}</strong><span className={`caisse-status ${row.statut === "cloturee" ? "is-closed" : "is-reopened"}`}>{row.statut || "—"}</span></div>
-                <dl><div><dt>Théorique</dt><dd>{formatMoney(row.solde_theorique)}</dd></div><div><dt>Compté</dt><dd>{formatMoney(row.solde_compte)}</dd></div><div><dt>Écart</dt><dd>{formatMoney(row.ecart)}</dd></div></dl>
-                {(row.commentaire || row.motif_reouverture) && <p className="caisse-closure-note">{row.motif_reouverture || row.commentaire}</p>}
-                {row.statut === "cloturee" && <>
-                  {reopenId === row.id_cloture_caisse ? <form className="caisse-reopen-form" onSubmit={(event) => handleReopen(event, row.id_cloture_caisse)}>
-                    <label>Motif obligatoire<input autoFocus required value={reopenReason} onChange={(event) => setReopenReason(event.target.value)} /></label>
-                    <button className="crud-primary" type="submit" disabled={saving}>Confirmer</button>
-                    <button className="crud-secondary" type="button" onClick={() => { setReopenId(null); setReopenReason(""); }}>Annuler</button>
-                  </form> : <button className="caisse-reopen-button" type="button" onClick={() => { setReopenId(row.id_cloture_caisse); setReopenReason(""); }}>Rouvrir avec un motif</button>}
-                </>}
-              </article>)}
-            </div>
-          )}
-        </section>
-      </div>
+      <section className="caisse-panel">
+        <div className="caisse-panel-heading">
+          <div><p className="caisse-eyebrow">ARCHIVES</p><h2>Historique des clôtures</h2></div>
+          <Clock3 size={19} className="caisse-heading-icon" />
+        </div>
+        {errors.clotures && <div className="caisse-alert error" role="alert">Clôtures : {errors.clotures}</div>}
+        {!errors.clotures && !loading && clotures.length === 0 ? (
+          <div className="caisse-empty compact"><span>Aucune clôture enregistrée.</span></div>
+        ) : !errors.clotures && (
+          <div className="caisse-table-wrap">
+            <table className="caisse-table closure-table">
+              <thead><tr><th>Date de clôture</th><th>Statut</th><th>Solde théorique</th><th>Montant compté</th><th>Écart</th><th>Commentaire</th><th>Action</th></tr></thead>
+              <tbody>{clotures.map((row, index) => {
+                const closureId = field(row, ["id_cloture_caisse", "id_cloture", "id"]);
+                const closureStatus = field(row, ["statut"]);
+                const theoretical = field(row, ["solde_theorique", "solde_theorique_cloture"]);
+                const counted = field(row, ["solde_compte", "montant_compte"]);
+                const backendDifference = field(row, ["ecart", "difference"]);
+                const difference = backendDifference ?? (
+                  theoretical !== null && counted !== null
+                    ? Number(counted) - Number(theoretical)
+                    : null
+                );
+                return (
+                  <tr key={closureId ?? index}>
+                    <td>{formatDate(field(row, ["date_cloture"]))}</td>
+                    <td>{display(closureStatus)}</td>
+                    <td>{formatMoney(theoretical)}</td>
+                    <td>{formatMoney(counted)}</td>
+                    <td className={Number(difference) < 0 ? "difference-negative" : "difference-positive"}>{formatMoney(difference)}</td>
+                    <td>{display(field(row, ["commentaire", "motif_reouverture"]))}</td>
+                    <td>
+                      {closureStatus !== "cloturee" ? "—" : reouvertureId === closureId ? (
+                        <form className="caisse-reopen-form" onSubmit={(event) => handleReopen(event, closureId)}>
+                          <input aria-label="Motif de réouverture obligatoire" required value={motifReouverture} onChange={(event) => setMotifReouverture(event.target.value)} placeholder="Motif obligatoire" />
+                          <button className="caisse-button secondary small" type="submit" disabled={busy === "reouverture"}>Confirmer</button>
+                          <button className="caisse-text-button" type="button" onClick={() => { setReouvertureId(null); setMotifReouverture(""); }}>Annuler</button>
+                        </form>
+                      ) : (
+                        <button className="caisse-text-button" type="button" onClick={() => { setActionError(""); setReouvertureId(closureId); }}>Rouvrir</button>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}</tbody>
+            </table>
+          </div>
+        )}
+      </section>
 
-      <nav className="caisse-source-links" aria-label="Modules financiers liés">
-        <strong>Modules financiers</strong>
-        <Link to="/paiements">Paiements scolaires</Link><Link to="/frais">Frais scolaires</Link><Link to="/paiements-honoraires">Paiements d’honoraires</Link><Link to="/honoraires">Honoraires</Link><Link to="/depenses">Dépenses</Link>
-      </nav>
+      <section className="caisse-links" aria-label="Modules financiers">
+        <div><p className="caisse-eyebrow">MODULES MÉTIER</p><h2>Accéder aux opérations détaillées</h2><span>La caisse centralise les mouvements sans remplacer leur gestion d’origine.</span></div>
+        <nav>
+          <Link to="/frais">Frais scolaires</Link><Link to="/paiements">Paiements scolaires</Link>
+          <Link to="/honoraires">Honoraires</Link><Link to="/paiements-honoraires">Paiements honoraires</Link>
+          <Link to="/depenses">Dépenses</Link>
+        </nav>
+      </section>
     </main>
   );
 }
