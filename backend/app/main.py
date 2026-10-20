@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.core.database import Base, engine
 from app.api.v1.api import api_router
+from app.models import caisse as caisse_models
 
 Base.metadata.create_all(bind=engine)
 

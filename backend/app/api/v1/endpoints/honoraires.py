@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from app.core.dependencies import get_db
+from app.core.dependencies import get_current_user, get_db
+from app.models.administration import Utilisateur
 from app.schemas.honoraires import (
     MoisCreate, MoisRead,
     HonoraireCreate, HonoraireUpdate, HonoraireRead,
@@ -48,8 +49,12 @@ def update_honoraire(id_honoraire: int, data: HonoraireUpdate, db: Session = Dep
 
 
 @router.post("/paiements", response_model=PaiementHonoraireRead, status_code=201)
-def create_paiement(data: PaiementHonoraireCreate, db: Session = Depends(get_db)):
-    return crud.create_paiement_honoraire(db, data)
+def create_paiement(
+    data: PaiementHonoraireCreate,
+    db: Session = Depends(get_db),
+    user: Utilisateur = Depends(get_current_user),
+):
+    return crud.create_paiement_honoraire(db, data, user)
 
 
 @router.get("/{id_honoraire}/paiements", response_model=list[PaiementHonoraireRead])

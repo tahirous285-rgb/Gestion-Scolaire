@@ -2,11 +2,18 @@ from sqlalchemy.orm import Session
 from fastapi import HTTPException
 from datetime import datetime
 from app.models.finance import TypeFrais, FraisScolaire, Paiement, Recu, Depense
+from app.models.eleves import Inscription, Eleve
 from app.schemas.finance import (
     TypeFraisCreate,
     FraisScolaireCreate,
     PaiementCreate,
     DepenseCreate
+)
+from app.services.caisse_service import (
+    ajouter_mouvement_especes,
+    verifier_etablissement_utilisateur,
+    verifier_frais_inscription_coherent,
+    verifier_inscription_etablissement,
 )
 
 
@@ -56,29 +63,53 @@ def get_paiement(db: Session, id_paiement: int):
     return db.query(Paiement).filter(Paiement.id_paiement == id_paiement).first()
 
 
-def create_paiement(db: Session, data: PaiementCreate):
+def create_paiement(db: Session, data: PaiementCreate, user):
     # Règle R11 : montant strictement positif
     if data.montant <= 0:
         raise HTTPException(status_code=400, detail="Le montant du paiement doit être supérieur à zéro")
 
-    db_obj = Paiement(**data.model_dump())
-    db.add(db_obj)
-    db.commit()
-    db.refresh(db_obj)
+    try:
+        verifier_inscription_etablissement(db, data.id_inscription, user.id_etablissement)
+        est_inscription = False
+        if data.id_frais is not None:
+            est_inscription = verifier_frais_inscription_coherent(
+                db, data.id_frais, data.id_inscription, user.id_etablissement
+            )
+        payment_values = data.model_dump()
+        payment_values["id_utilisateur"] = user.id_utilisateur
+        db_obj = Paiement(**payment_values)
+        db.add(db_obj)
+        db.flush()
 
-    # Génération automatique du reçu (relation 1,1)
-    numero_recu = f"RECU-{db_obj.id_paiement:06d}"
-    recu = Recu(
-        id_paiement=db_obj.id_paiement,
-        numero_recu=numero_recu,
-        date_emission=datetime.utcnow(),
-        montant=db_obj.montant,
-        imprime=False
-    )
-    db.add(recu)
-    db.commit()
-
-    return db_obj
+        recu = Recu(
+            id_paiement=db_obj.id_paiement,
+            numero_recu=f"RECU-{db_obj.id_paiement:06d}",
+            date_emission=datetime.utcnow(),
+            montant=db_obj.montant,
+            imprime=False,
+        )
+        db.add(recu)
+        if est_inscription:
+            ajouter_mouvement_especes(
+                db,
+                id_etablissement=user.id_etablissement,
+                date_mouvement=data.date_paiement,
+                sens="entree",
+                categorie="frais_inscription",
+                libelle=f"Paiement frais d'inscription {data.reference}",
+                montant=data.montant,
+                mode_paiement=data.mode_paiement,
+                source_type="paiement",
+                source_id=db_obj.id_paiement,
+                id_utilisateur=user.id_utilisateur,
+                commentaire=data.commentaire,
+            )
+        db.commit()
+        db.refresh(db_obj)
+        return db_obj
+    except Exception:
+        db.rollback()
+        raise
 
 
 # ---------- RECU ----------
@@ -128,9 +159,33 @@ def get_depenses(db: Session, id_etablissement: int = None, skip: int = 0, limit
     return query.offset(skip).limit(limit).all()
 
 
-def create_depense(db: Session, data: DepenseCreate):
-    db_obj = Depense(**data.model_dump())
-    db.add(db_obj)
-    db.commit()
-    db.refresh(db_obj)
-    return db_obj
+def create_depense(db: Session, data: DepenseCreate, user):
+    verifier_etablissement_utilisateur(user, data.id_etablissement)
+    if data.montant <= 0:
+        raise HTTPException(status_code=400, detail="Le montant de la dépense doit être supérieur à zéro")
+    try:
+        expense_values = data.model_dump()
+        expense_values["id_utilisateur"] = user.id_utilisateur
+        db_obj = Depense(**expense_values)
+        db.add(db_obj)
+        db.flush()
+        ajouter_mouvement_especes(
+            db,
+            id_etablissement=user.id_etablissement,
+            date_mouvement=datetime.combine(data.date_depense, datetime.min.time()),
+            sens="sortie",
+            categorie="depense",
+            libelle=data.libelle,
+            montant=data.montant,
+            mode_paiement=data.mode_paiement,
+            source_type="depense",
+            source_id=db_obj.id_depense,
+            id_utilisateur=user.id_utilisateur,
+            commentaire=data.observation,
+        )
+        db.commit()
+        db.refresh(db_obj)
+        return db_obj
+    except Exception:
+        db.rollback()
+        raise

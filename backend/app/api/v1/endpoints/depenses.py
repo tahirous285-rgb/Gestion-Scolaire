@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from app.core.dependencies import get_db
+from app.core.dependencies import get_current_user, get_db
+from app.models.administration import Utilisateur
 from app.schemas.finance import DepenseCreate, DepenseRead
 from app.crud import finance as crud
 
@@ -13,5 +14,9 @@ def list_depenses(id_etablissement: int = None, db: Session = Depends(get_db)):
 
 
 @router.post("/", response_model=DepenseRead, status_code=201)
-def create_depense(data: DepenseCreate, db: Session = Depends(get_db)):
-    return crud.create_depense(db, data)
+def create_depense(
+    data: DepenseCreate,
+    db: Session = Depends(get_db),
+    user: Utilisateur = Depends(get_current_user),
+):
+    return crud.create_depense(db, data, user)

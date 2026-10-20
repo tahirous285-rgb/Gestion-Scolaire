@@ -26,6 +26,7 @@ const pageTitles = {
   "/paiements": "Paiements scolaires",
   "/recus": "Reçus",
   "/depenses": "Dépenses",
+  "/caisse": "Caisse",
   "/cartes": "Cartes scolaires",
   "/annonces": "Annonces",
   "/messages": "Messages",

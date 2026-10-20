@@ -57,6 +57,7 @@ const sections = [
       ["/paiements", "Paiements scolaires", CreditCard],
       ["/recus", "Reçus", Receipt],
       ["/depenses", "Dépenses", Wallet],
+      ["/caisse", "Caisse", Banknote],
       ["/cartes", "Cartes scolaires", IdCard],
     ],
   },

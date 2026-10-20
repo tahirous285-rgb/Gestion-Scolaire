@@ -1,7 +1,9 @@
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
 from app.models.honoraires import Mois, Honoraire, PaiementHonoraire
+from app.models.enseignants import Enseignant
 from app.schemas.honoraires import MoisCreate, HonoraireCreate, HonoraireUpdate, PaiementHonoraireCreate
+from app.services.caisse_service import ajouter_mouvement_especes, verifier_etablissement_utilisateur
 
 
 # ---------- MOIS ----------
@@ -80,26 +82,50 @@ def get_paiements_honoraire(db: Session, id_honoraire: int = None):
     return query.all()
 
 
-def create_paiement_honoraire(db: Session, data: PaiementHonoraireCreate):
+def create_paiement_honoraire(db: Session, data: PaiementHonoraireCreate, user):
     # Règle R11 : le montant doit être strictement positif
     if data.montant <= 0:
         raise HTTPException(status_code=400, detail="Le montant du paiement doit être supérieur à zéro")
 
-    honoraire = db.query(Honoraire).filter(Honoraire.id_honoraire == data.id_honoraire).first()
-    if not honoraire:
-        raise HTTPException(status_code=404, detail="Honoraire introuvable")
+    try:
+        honoraire = db.query(Honoraire).filter(Honoraire.id_honoraire == data.id_honoraire).first()
+        if not honoraire:
+            raise HTTPException(status_code=404, detail="Honoraire introuvable")
+        enseignant = db.query(Enseignant).filter(
+            Enseignant.id_enseignant == honoraire.id_enseignant
+        ).first()
+        if not enseignant:
+            raise HTTPException(status_code=404, detail="Enseignant introuvable")
+        verifier_etablissement_utilisateur(user, enseignant.id_etablissement)
 
-    # On empêche de payer plus que le solde restant
-    if data.montant > honoraire.solde:
-        raise HTTPException(status_code=400, detail="Le montant dépasse le solde restant dû")
+        if data.montant > honoraire.solde:
+            raise HTTPException(status_code=400, detail="Le montant dépasse le solde restant dû")
 
-    db_obj = PaiementHonoraire(**data.model_dump())
-    db.add(db_obj)
+        payment_values = data.model_dump()
+        payment_values["id_utilisateur"] = user.id_utilisateur
+        db_obj = PaiementHonoraire(**payment_values)
+        db.add(db_obj)
+        db.flush()
 
-    # Mise à jour du montant payé et recalcul du solde (R9)
-    honoraire.montant_paye = (honoraire.montant_paye or 0) + data.montant
-    _recalculer_honoraire(honoraire)
-
-    db.commit()
-    db.refresh(db_obj)
-    return db_obj
+        honoraire.montant_paye = (honoraire.montant_paye or 0) + data.montant
+        _recalculer_honoraire(honoraire)
+        ajouter_mouvement_especes(
+            db,
+            id_etablissement=user.id_etablissement,
+            date_mouvement=data.date_paiement,
+            sens="sortie",
+            categorie="honoraire",
+            libelle=f"Paiement honoraire {data.reference}",
+            montant=data.montant,
+            mode_paiement=data.mode_paiement,
+            source_type="paiement_honoraire",
+            source_id=db_obj.id_paiement_honoraire,
+            id_utilisateur=user.id_utilisateur,
+            commentaire=data.commentaire,
+        )
+        db.commit()
+        db.refresh(db_obj)
+        return db_obj
+    except Exception:
+        db.rollback()
+        raise

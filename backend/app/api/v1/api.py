@@ -15,7 +15,8 @@ from app.api.v1.endpoints import (
     communication,
     parametres,
     dashboard,
-    journal
+    journal,
+    caisse,
 )
 
 api_router = APIRouter()
@@ -55,3 +56,4 @@ api_router.include_router(communication.router, prefix="/communication", tags=["
 api_router.include_router(parametres.router, prefix="/parametres", tags=["Paramètres"], dependencies=protected)
 api_router.include_router(dashboard.router, prefix="/dashboard", tags=["Dashboard"], dependencies=protected)
 api_router.include_router(journal.router, prefix="/journal", tags=["Journal d'activité"], dependencies=protected)
+api_router.include_router(caisse.router, prefix="/caisse", tags=["Caisse"], dependencies=protected)

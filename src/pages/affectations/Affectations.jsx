@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useReferenceOptions } from "../../hooks/useReferenceOptions";
-import BackendUnavailable from "../../components/common/BackendUnavailable";
 import { getAnnees } from "../../services/anneesApi";
 import { getClasses } from "../../services/classesApi";
 import { getMatieres } from "../../services/matieresApi";
@@ -53,7 +52,6 @@ export default function Affectations() {
   return (
     <div className="crud-page">
       <div className="crud-header"><div><div className="crud-eyebrow">Enseignants</div><h1>🔗 Affectations</h1><p>Relations enseignant–matière et enseignant–classe exposées par l’API.</p></div></div>
-      <div className="crud-alert info-alert"><span>Une affectation peut être créée et consultée par enseignant. Le backend n’expose pas de suppression ou de modification de ces relations.</span></div>
       {error && <div className="crud-alert">⚠️ {error}</div>}{success && <div className="success-message">✓ {success}</div>}
       <section className="inline-panel">
         <div className="inline-form assignment-selector">
@@ -73,7 +71,7 @@ export default function Affectations() {
         <div className="inline-panel-heading"><div><h2>{kind === "matieres" ? "Matières affectées" : "Classes affectées"}</h2><p>{loading ? "Chargement…" : `${links.length} relation(s)`}</p></div></div>
         {!teacherId ? <div className="crud-state"><h3>Sélectionnez un enseignant</h3></div> : links.length === 0 && !loading ? <div className="crud-state"><h3>Aucune affectation</h3></div> : <div className="relation-list">{links.map((link, index) => <div className="relation-row" key={`${kind}-${index}-${link.id_matiere || link.id_classe}`}><span>{kind === "matieres" ? `Matière #${link.id_matiere}` : `Classe #${link.id_classe} · Année #${link.id_annee}`}</span>{link.principal ? <span className="status-badge success">Principal</span> : <span className="status-badge neutral">Secondaire</span>}</div>)}</div>}
       </section>
-      <div className="page-note"><BackendUnavailable>les affectations classe–matière (ClasseMatiere) sont déclarées dans les modèles mais aucun routeur backend ne les expose.</BackendUnavailable></div>
+      <div className="page-note">Cette page gère les relations enseignant–matière et enseignant–classe. L’association directe classe–matière n’est pas proposée ici.</div>
     </div>
   );
 }
