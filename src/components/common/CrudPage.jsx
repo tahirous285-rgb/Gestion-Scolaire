@@ -13,7 +13,7 @@ function labelOf(value) {
 }
 
 function serializeValue(field, value) {
-  if (field.type === "number" || field.name.startsWith("id_")) {
+  if (field.type === "number" || field.name?.startsWith("id_")) {
     if (value === "" || value === null || value === undefined) return null;
     return Number(value);
   }
