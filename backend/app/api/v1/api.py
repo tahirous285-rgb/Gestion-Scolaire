@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from app.core.dependencies import get_current_user
 from app.api.v1.endpoints import (
     auth,
-    etablissements, roles, utilisateurs,
+    etablissements, roles, permissions, utilisateurs,
     annees_scolaires, periodes, classes, matieres,
     eleves, parents, inscriptions,
     enseignants,
@@ -29,6 +29,7 @@ protected = [Depends(get_current_user)]
 
 api_router.include_router(etablissements.router, prefix="/etablissements", tags=["Établissements"], dependencies=protected)
 api_router.include_router(roles.router, prefix="/roles", tags=["Rôles"], dependencies=protected)
+api_router.include_router(permissions.router, prefix="/permissions", tags=["Permissions"], dependencies=protected)
 api_router.include_router(utilisateurs.router, prefix="/utilisateurs", tags=["Utilisateurs"], dependencies=protected)
 api_router.include_router(annees_scolaires.router, prefix="/annees-scolaires", tags=["Années scolaires"], dependencies=protected)
 api_router.include_router(periodes.router, prefix="/periodes", tags=["Périodes"], dependencies=protected)

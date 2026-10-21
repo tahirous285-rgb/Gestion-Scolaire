@@ -143,6 +143,7 @@ function Field({ field, value, onChange, disabled, imageLoading = false }) {
 
 export default function CrudPage({
   title,
+  headingLevel = "h1",
   subtitle,
   icon = "📋",
   columns = [],
@@ -168,6 +169,7 @@ export default function CrudPage({
   initialForm = {},
   normalize = (row) => row,
   onLoaded,
+  onLoadError,
   onSuccess,
   formatError,
   pagination = null,
@@ -196,6 +198,7 @@ export default function CrudPage({
   const [requestLoader] = useState(() => load);
   const [rowNormalizer] = useState(() => normalize);
   const [loadedCallback] = useState(() => onLoaded);
+  const [loadErrorCallback] = useState(() => onLoadError);
   const [successCallback] = useState(() => onSuccess);
   const [errorFormatter] = useState(() => formatError);
 
@@ -223,12 +226,13 @@ export default function CrudPage({
     } catch (requestError) {
       if (mountedRef.current) {
         setError(errorMessageFor(requestError, "Erreur de chargement.", errorFormatter));
+        loadErrorCallback?.(requestError);
       }
       return [];
     } finally {
       if (mountedRef.current) setLoading(false);
     }
-  }, [requestLoader, rowNormalizer, loadedCallback, page, pageSize, errorFormatter]);
+  }, [requestLoader, rowNormalizer, loadedCallback, loadErrorCallback, page, pageSize, errorFormatter]);
 
   useEffect(() => {
     // Chargement initial et changement de page : l’effet synchronise la table avec l’API.
@@ -411,15 +415,16 @@ export default function CrudPage({
   }
 
   const activeFields = selected ? editFields : createFields;
+  const Heading = headingLevel;
 
   return (
     <div className="crud-page">
       <div className="crud-header">
         <div>
           <div className="crud-eyebrow">Gestion scolaire</div>
-          <h1>
+          <Heading>
             <span aria-hidden="true">{icon}</span> {title}
-          </h1>
+          </Heading>
           {subtitle && <p>{subtitle}</p>}
         </div>
         <div className="crud-header-actions">

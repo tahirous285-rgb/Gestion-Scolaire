@@ -1,0 +1,186 @@
+.roles-permissions-page {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.roles-permissions-title {
+  margin: 0 0 20px;
+  color: #1f2937;
+  font-size: 28px;
+}
+
+.administration-section {
+  margin-bottom: 28px;
+}
+
+.administration-section .crud-page {
+  padding: 0;
+}
+
+.administration-section .crud-header h2 {
+  margin: 0;
+  color: #1f2937;
+  font-size: 23px;
+}
+
+.association-section {
+  padding: 22px;
+  border: 1px solid #e5e7eb;
+  border-radius: 13px;
+  background: #fff;
+}
+
+.association-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.association-heading h2 {
+  margin: 0;
+  color: #1f2937;
+  font-size: 22px;
+}
+
+.association-heading p {
+  margin: 6px 0 0;
+  color: #6b7280;
+}
+
+.role-selector-label {
+  display: block;
+  margin-bottom: 6px;
+  color: #374151;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.role-selector {
+  width: min(520px, 100%);
+  min-height: 43px;
+  padding: 8px 11px;
+  border: 1px solid #d1d5db;
+  border-radius: 9px;
+  background: #fff;
+  font: inherit;
+}
+
+.association-content {
+  margin-top: 20px;
+}
+
+.permission-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 8px;
+}
+
+.permission-toolbar .crud-search-wrap {
+  flex: 1;
+}
+
+.permission-toolbar .crud-search {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.permission-bulk-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.permission-count {
+  margin: 10px 0;
+  color: #4b5563;
+  font-size: 13px;
+}
+
+.permission-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.permission-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.permission-option:has(input:checked) {
+  border-color: #93c5fd;
+  background: #eff6ff;
+}
+
+.permission-option input {
+  flex: 0 0 auto;
+  width: 17px;
+  height: 17px;
+  margin: 2px 0 0;
+  accent-color: #2563eb;
+}
+
+.permission-option span {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.permission-option strong {
+  color: #1f2937;
+}
+
+.permission-option code {
+  width: fit-content;
+  color: #1d4ed8;
+  font-size: 12px;
+}
+
+.permission-option small {
+  color: #6b7280;
+  line-height: 1.45;
+}
+
+.association-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 18px;
+}
+
+.crud-primary:disabled,
+.crud-secondary:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+@media (max-width: 760px) {
+  .roles-permissions-page {
+    padding: 16px;
+  }
+
+  .association-section {
+    padding: 16px;
+  }
+
+  .association-heading,
+  .permission-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .permission-list {
+    grid-template-columns: 1fr;
+  }
+}

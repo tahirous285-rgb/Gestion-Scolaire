@@ -5,6 +5,7 @@ import { clearSession, getAccessToken, getSession } from "./authStorage";
 const configuredApiUrl = import.meta.env.VITE_API_URL || "";
 const usesBrowserLocalhost = /^(https?:\/\/)?(127\.0\.0\.1|localhost)(:\d+)?/i.test(configuredApiUrl);
 const API_URL = (usesBrowserLocalhost || !configuredApiUrl ? "/api/v1" : configuredApiUrl).replace(/\/$/, "");
+export const DATA_CHANGED_EVENT = "app:data-changed";
 
 export class ApiError extends Error {
   constructor(message, status, data = null) {
@@ -50,6 +51,7 @@ async function readResponse(response) {
 
 export async function apiRequest(path, options = {}) {
   const { headers: optionHeaders = {}, body, ...rest } = options;
+  const method = String(rest.method || "GET").toUpperCase();
   const headers = {
     Accept: "application/json",
     ...optionHeaders,
@@ -90,6 +92,14 @@ export async function apiRequest(path, options = {}) {
 
   if (!response.ok) {
     throw new ApiError(errorMessage(data, response.status), response.status, data);
+  }
+
+  if (
+    ["POST", "PUT", "PATCH", "DELETE"].includes(method) &&
+    !/^\/auth(?:\/|$)/.test(path) &&
+    typeof window !== "undefined"
+  ) {
+    window.dispatchEvent(new Event(DATA_CHANGED_EVENT));
   }
 
   return data;

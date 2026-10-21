@@ -54,6 +54,12 @@ class RoleCreate(RoleBase):
     pass
 
 
+class RoleUpdate(BaseModel):
+    nom: Optional[str] = None
+    code: Optional[str] = None
+    description: Optional[str] = None
+
+
 class RoleRead(RoleBase):
     id_role: int
 
@@ -72,11 +78,23 @@ class PermissionCreate(PermissionBase):
     pass
 
 
+class PermissionUpdate(BaseModel):
+    nom: Optional[str] = None
+    code: Optional[str] = None
+    description: Optional[str] = None
+
+
 class PermissionRead(PermissionBase):
     id_permission: int
 
     class Config:
         from_attributes = True
+
+
+# ---------- ROLE_PERMISSION ----------
+class RolePermissionAssign(BaseModel):
+    id_role: int
+    id_permission: int
 
 
 # ---------- UTILISATEUR ----------
