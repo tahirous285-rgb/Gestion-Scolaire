@@ -173,6 +173,7 @@ export default function CrudPage({
   onSuccess,
   formatError,
   pagination = null,
+  refreshTrigger = 0,
 }) {
   const [rows, setRows] = useState([]);
   const [search, setSearch] = useState("");
@@ -232,7 +233,7 @@ export default function CrudPage({
     } finally {
       if (mountedRef.current) setLoading(false);
     }
-  }, [requestLoader, rowNormalizer, loadedCallback, loadErrorCallback, page, pageSize, errorFormatter]);
+  }, [requestLoader, rowNormalizer, loadedCallback, loadErrorCallback, page, pageSize, errorFormatter, refreshTrigger]);
 
   useEffect(() => {
     // Chargement initial et changement de page : l’effet synchronise la table avec l’API.
