@@ -39,7 +39,7 @@ export default function Bulletins() {
 
   return (
     <CrudPage
-      key={refreshKey}
+      refreshTrigger={refreshKey}
       title="Bulletins"
       subtitle="Consultez, imprimez et gérez les bulletins individuels, ou générez les bulletins de toute une classe à partir des notes enregistrées."
       toolbarActions={<BulletinBatchGenerator onGenerated={() => setRefreshKey((current) => current + 1)} />}
