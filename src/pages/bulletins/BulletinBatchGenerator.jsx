@@ -662,6 +662,18 @@ export default function BulletinBatchGenerator({ onGenerated }) {
                   <p>
                     {report.classe} — {report.periode} — {report.annee}
                   </p>
+                  <div className="crud-form-actions">
+                    <button
+                      type="button"
+                      className="crud-primary"
+                      disabled={!report.rows.some((row) => row.printData)}
+                      onClick={() => printBulletinsCollectifs(
+                        report.rows.filter((row) => row.printData).map((row) => row.printData),
+                      )}
+                    >
+                      🖨 Imprimer tous les bulletins prêts
+                    </button>
+                  </div>
                   <div className="crud-details">
                     <div className="crud-detail"><span>Créés</span><strong>{report.summary.created}</strong></div>
                     <div className="crud-detail"><span>Actualisés</span><strong>{report.summary.updated}</strong></div>
@@ -678,6 +690,7 @@ export default function BulletinBatchGenerator({ onGenerated }) {
                           <th>Moyenne</th>
                           <th>Rang</th>
                           <th>Résultat</th>
+                          <th>Impression</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -687,6 +700,16 @@ export default function BulletinBatchGenerator({ onGenerated }) {
                             <td>{formatAverage(row.moyenne_generale)}</td>
                             <td>{ordinalRank(row.rang)}</td>
                             <td>{row.statut}</td>
+                            <td>
+                              <button
+                                type="button"
+                                className="crud-secondary"
+                                disabled={!row.printData}
+                                onClick={() => printBulletinData(row.printData)}
+                              >
+                                🖨 Imprimer
+                              </button>
+                            </td>
                           </tr>
                         ))}
                       </tbody>
