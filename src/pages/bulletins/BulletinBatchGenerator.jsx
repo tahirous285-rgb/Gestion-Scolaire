@@ -345,6 +345,21 @@ export default function BulletinBatchGenerator({ onGenerated }) {
         );
       });
 
+      const validatedBulletins = Array.from(existingByInscription.values()).filter(
+        (bulletin) => bulletin && Boolean(bulletin.valide),
+      );
+      if (validatedBulletins.length > 0) {
+        const confirmed = window.confirm(
+          validatedBulletins.length +
+          " bulletin(s) de cette sélection sont déjà validés. Si vous continuez, leurs moyennes et rangs seront recalculés et leur validation sera réinitialisée afin de préserver un classement cohérent. Continuer ?",
+        );
+        if (!confirmed) {
+          setProgress(null);
+          setError("Génération annulée. Aucun bulletin n’a été modifié.");
+          return;
+        }
+      }
+
       const nameByInscription = new Map(studentEntries);
       const calculationByInscription = new Map(
         calculations.map((row) => [Number(row.id_inscription), row]),
@@ -352,7 +367,7 @@ export default function BulletinBatchGenerator({ onGenerated }) {
       const summary = {
         created: 0,
         updated: 0,
-        protected: 0,
+        validationReinitialisee: 0,
         failed: 0,
         withoutAverage: noAverageCount,
       };
@@ -371,59 +386,56 @@ export default function BulletinBatchGenerator({ onGenerated }) {
         const existing = existingByInscription.get(idInscription);
         const studentName = nameByInscription.get(idInscription) || ("Élève #" + inscription.id_eleve);
 
-        if (existing && Boolean(existing.valide)) {
-          summary.protected += 1;
-          rowsReport.push({
-            id_inscription: idInscription,
-            nom: studentName,
-            moyenne_generale: existing.moyenne_generale ?? result.moyenne_generale,
-            rang: existing.rang ?? result.rang,
-            statut: "Bulletin validé conservé sans modification",
-          });
-        } else {
-          try {
-            const payload = {
-              moyenne_generale: result.moyenne_generale,
-              rang: result.rang,
-            };
+        try {
+          const wasValidated = Boolean(existing && existing.valide);
+          const payload = {
+            moyenne_generale: result.moyenne_generale,
+            rang: result.rang,
+          };
 
-            if (existing) {
-              await updateBulletin(Number(existing.id_bulletin), payload);
-              summary.updated += 1;
-              rowsReport.push({
-                id_inscription: idInscription,
-                nom: studentName,
-                moyenne_generale: result.moyenne_generale,
-                rang: result.rang,
-                statut: "Bulletin actualisé",
-              });
-            } else {
-              await createBulletin({
-                id_inscription: idInscription,
-                id_periode: selectedPeriodeId,
-                moyenne_generale: result.moyenne_generale,
-                rang: result.rang,
-                valide: false,
-              });
-              summary.created += 1;
-              rowsReport.push({
-                id_inscription: idInscription,
-                nom: studentName,
-                moyenne_generale: result.moyenne_generale,
-                rang: result.rang,
-                statut: "Bulletin créé",
-              });
+          if (existing) {
+            if (wasValidated) {
+              payload.valide = false;
+              payload.id_validateur = null;
             }
-          } catch (writeError) {
-            summary.failed += 1;
+            await updateBulletin(Number(existing.id_bulletin), payload);
+            summary.updated += 1;
+            if (wasValidated) summary.validationReinitialisee += 1;
             rowsReport.push({
               id_inscription: idInscription,
               nom: studentName,
               moyenne_generale: result.moyenne_generale,
               rang: result.rang,
-              statut: "Échec : " + (writeError.message || "erreur d’enregistrement"),
+              statut: wasValidated
+                ? "Bulletin recalculé — validation réinitialisée"
+                : "Bulletin actualisé",
+            });
+          } else {
+            await createBulletin({
+              id_inscription: idInscription,
+              id_periode: selectedPeriodeId,
+              moyenne_generale: result.moyenne_generale,
+              rang: result.rang,
+              valide: false,
+            });
+            summary.created += 1;
+            rowsReport.push({
+              id_inscription: idInscription,
+              nom: studentName,
+              moyenne_generale: result.moyenne_generale,
+              rang: result.rang,
+              statut: "Bulletin créé",
             });
           }
+        } catch (writeError) {
+          summary.failed += 1;
+          rowsReport.push({
+            id_inscription: idInscription,
+            nom: studentName,
+            moyenne_generale: result.moyenne_generale,
+            rang: result.rang,
+            statut: "Échec : " + (writeError.message || "erreur d’enregistrement"),
+          });
         }
 
         setProgress({
@@ -590,7 +602,7 @@ export default function BulletinBatchGenerator({ onGenerated }) {
                   <div className="crud-details">
                     <div className="crud-detail"><span>Créés</span><strong>{report.summary.created}</strong></div>
                     <div className="crud-detail"><span>Actualisés</span><strong>{report.summary.updated}</strong></div>
-                    <div className="crud-detail"><span>Bulletins validés conservés</span><strong>{report.summary.protected}</strong></div>
+                    <div className="crud-detail"><span>Validations réinitialisées après recalcul</span><strong>{report.summary.validationReinitialisee}</strong></div>
                     <div className="crud-detail"><span>Sans moyenne calculable</span><strong>{report.summary.withoutAverage}</strong></div>
                     <div className="crud-detail"><span>Échecs</span><strong>{report.summary.failed}</strong></div>
                   </div>
