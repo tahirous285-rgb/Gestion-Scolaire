@@ -159,10 +159,21 @@ export default function BulletinBatchGenerator({ onGenerated }) {
     Promise.all([getAnnees(), getClasses()])
       .then(([anneesData, classesData]) => {
         if (cancelled) return;
-        setAnnees((Array.isArray(anneesData) ? anneesData : []).filter(
+        const anneesRows = Array.isArray(anneesData) ? anneesData : [];
+        const classesRows = Array.isArray(classesData) ? classesData : [];
+        if (anneesRows.length >= API_LIST_LIMIT || classesRows.length >= API_LIST_LIMIT) {
+          setAnnees([]);
+          setClasses([]);
+          setReferenceError(
+            "L’API limite les listes d’années et de classes à 100 éléments sans pagination. " +
+            "La génération est désactivée pour éviter de choisir à partir d’une liste incomplète.",
+          );
+          return;
+        }
+        setAnnees(anneesRows.filter(
           (row) => Number(row.id_etablissement) === idEtablissement,
         ));
-        setClasses((Array.isArray(classesData) ? classesData : []).filter(
+        setClasses(classesRows.filter(
           (row) => Number(row.id_etablissement) === idEtablissement,
         ));
       })
@@ -474,7 +485,7 @@ export default function BulletinBatchGenerator({ onGenerated }) {
     }
   }
 
-  const canGenerate = !loadingReferences && !loadingPeriodes && !busy &&
+  const canGenerate = !referenceError && !loadingReferences && !loadingPeriodes && !busy &&
     numericId(anneeId) && numericId(classeId) && numericId(periodeId);
 
   return (
