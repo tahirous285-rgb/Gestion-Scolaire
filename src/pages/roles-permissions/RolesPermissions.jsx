@@ -6,6 +6,7 @@ import {
   createRole,
   deletePermission,
   deleteRole,
+  getPermissions,
   getRolePermissions,
   getRoles,
   removePermissionFromRole,

@@ -100,18 +100,48 @@ export default function AuthProvider({ children }) {
 
   const signIn = useCallback(async (credentials) => {
     const response = await loginRequest({
-      id_etablissement: Number(credentials.id_etablissement),
-      login: credentials.login,
+      email: credentials.email.trim().toLowerCase(),
       mot_de_passe: credentials.mot_de_passe,
     });
-    const nextSession = saveSession(response, credentials.id_etablissement);
-    verificationId.current += 1;
+    const nextSession = saveSession(response);
+    const requestId = ++verificationId.current;
     setAuthState({
       session: nextSession,
-      status: "authenticated",
+      status: "checking",
       error: "",
       dashboardData: null,
     });
+
+    try {
+      const dashboardData = await getDashboard(nextSession.id_etablissement);
+      if (requestId !== verificationId.current) return nextSession;
+      setAuthState({
+        session: nextSession,
+        status: "authenticated",
+        error: "",
+        dashboardData,
+      });
+    } catch (error) {
+      if (requestId !== verificationId.current) return nextSession;
+      if (error?.status === 401) {
+        clearSession();
+        setAuthState({
+          session: null,
+          status: "unauthenticated",
+          error: "",
+          dashboardData: null,
+        });
+        throw error;
+      }
+      setAuthState({
+        session: nextSession,
+        status: "error",
+        error: error?.message || "Erreur réseau lors de la vérification de la session.",
+        dashboardData: null,
+      });
+      throw error;
+    }
+
     return nextSession;
   }, []);
 

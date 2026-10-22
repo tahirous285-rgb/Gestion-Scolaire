@@ -61,10 +61,10 @@ export function getSession() {
   };
 }
 
-export function saveSession(tokenResponse, idEtablissement) {
+export function saveSession(tokenResponse) {
   const session = {
     ...tokenResponse,
-    id_etablissement: Number(idEtablissement),
+    id_etablissement: Number(tokenResponse.id_etablissement),
   };
 
   localStorage.setItem(SESSION_KEY, JSON.stringify(session));

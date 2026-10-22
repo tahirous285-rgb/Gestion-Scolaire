@@ -5,6 +5,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from app.api.v1.api import api_router
+from app.api.v1.endpoints.auth import login, register
 from app.api.v1.endpoints.permissions import router as permissions_router
 from app.core.database import Base
 from app.core.dependencies import get_current_user
@@ -17,6 +18,8 @@ from app.models.administration import (
     Utilisateur,
 )
 from app.schemas.administration import PermissionCreate, RoleCreate
+from app.schemas.auth import LoginRequest, RegistrationRequest
+from app.services.auth_service import authenticate_user
 
 
 @pytest.fixture
@@ -145,3 +148,57 @@ def test_permission_endpoints_remain_registered_with_authentication():
         any(dependency.call is get_current_user for dependency in route.dependant.dependencies)
         for route in permission_routes
     )
+
+
+def test_registration_endpoint_is_public():
+    registration_routes = [
+        route
+        for route in api_router.routes
+        if route.path == "/auth/register" and "POST" in route.methods
+    ]
+    assert len(registration_routes) == 1
+    assert not any(
+        dependency.call is get_current_user
+        for dependency in registration_routes[0].dependant.dependencies
+    )
+
+
+def test_registration_creates_school_and_admin_account(db):
+    data = RegistrationRequest(
+        nom_etablissement="École Exemple",
+        nom="Diallo",
+        prenom="Awa",
+        email="awa@example.com",
+        mot_de_passe="MotDePasseSecurise123",
+    )
+
+    result = register(data, db)
+
+    user = authenticate_user(
+        db,
+        str(data.email),
+        data.mot_de_passe,
+    )
+    assert result.id_etablissement == 1
+    assert result.id_utilisateur == user.id_utilisateur
+    assert user.role.code == "ADMIN_ETABLISSEMENT"
+
+    token = login(
+        LoginRequest(email=str(data.email), mot_de_passe=data.mot_de_passe),
+        db,
+    )
+    assert token.id_etablissement == result.id_etablissement
+    assert token.id_utilisateur == user.id_utilisateur
+
+    with pytest.raises(HTTPException) as duplicate_email:
+        register(
+            RegistrationRequest(
+                nom_etablissement="Autre école",
+                nom="Diallo",
+                prenom="Awa",
+                email="awa@example.com",
+                mot_de_passe="MotDePasseSecurise123",
+            ),
+            db,
+        )
+    assert duplicate_email.value.status_code == 409

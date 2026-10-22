@@ -60,6 +60,8 @@ button:disabled { cursor: not-allowed; opacity: .65; }
 .login-input-wrap input::placeholder { color: #a9b2c3; }
 .login-submit { display: flex; align-items: center; justify-content: center; gap: 10px; height: 50px; margin-top: 20px; border: 0; border-radius: 11px; color: #fff; background: var(--primary); box-shadow: 0 8px 18px rgba(49,87,213,.2); font-size: 14px; font-weight: 700; transition: background .2s, transform .2s; }
 .login-submit:hover { background: var(--primary-dark); transform: translateY(-1px); }
+.login-secondary { display: flex; align-items: center; justify-content: center; gap: 9px; min-height: 48px; margin-top: 10px; border: 1px solid #dfe5f0; border-radius: 11px; color: var(--ink); background: #fff; font-size: 14px; font-weight: 700; text-decoration: none; transition: border-color .2s, background .2s; }
+.login-secondary:hover { border-color: var(--primary); background: #f7f8ff; }
 .auth-gate { display: grid; min-height: 100vh; place-items: center; padding: 24px; background: var(--canvas); }
 .auth-gate-card { width: min(480px, 100%); padding: 28px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); box-shadow: 0 16px 40px rgba(24, 35, 61, .08); }
 .auth-gate-card h1 { margin: 0 0 10px; color: var(--ink); font-family: Manrope, sans-serif; font-size: 22px; }
@@ -68,6 +70,20 @@ button:disabled { cursor: not-allowed; opacity: .65; }
 .auth-gate-actions a { color: var(--primary); font-size: 13px; font-weight: 700; }
 .login-alert { margin-bottom: 16px; padding: 12px 14px; border: 1px solid #f2c9ce; border-radius: 10px; color: #9b2633; background: #fff5f5; font-size: 13px; line-height: 1.45; }
 .login-footnote { margin-top: 22px; color: #a0a9ba; font-size: 11px; line-height: 1.6; text-align: center; }
+.auth-switch { margin: 12px 0 0; color: var(--muted); font-size: 13px; text-align: center; }
+.auth-switch a, .auth-back-link { color: var(--primary); font-weight: 700; text-decoration: none; }
+.register-panel { align-items: start; overflow-y: auto; }
+.register-card { width: min(620px, 100%); margin: auto; }
+.auth-back-link { display: inline-flex; align-items: center; gap: 7px; margin-bottom: 24px; font-size: 13px; }
+.register-card .login-card-heading { margin-bottom: 18px; }
+.register-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.register-field { min-width: 0; }
+.register-field-wide, .register-submit { grid-column: 1 / -1; }
+.register-field label { display: block; margin: 0 0 7px; color: var(--muted-dark); font-size: 12px; font-weight: 700; }
+.password-toggle { display: grid; flex: 0 0 28px; place-items: center; width: 28px; height: 32px; padding: 0; border: 0; border-radius: 6px; color: #7d899d; background: transparent; }
+.password-toggle:hover { color: var(--primary); background: #f3f5ff; }
+.password-toggle:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.register-submit { width: 100%; }
 
 /* Layout */
 .app-layout { display: flex; min-height: 100vh; width: 100%; }

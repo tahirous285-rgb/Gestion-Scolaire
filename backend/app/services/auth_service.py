@@ -1,20 +1,21 @@
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 from app.models.administration import Utilisateur
 from app.core.security import verify_password
 
 
-def authenticate_user(db: Session, id_etablissement: int, login: str, mot_de_passe: str):
+def authenticate_user(db: Session, email: str, mot_de_passe: str):
     """
-    Vérifie les identifiants d'un utilisateur pour un établissement donné.
-    Retourne l'utilisateur si les identifiants sont valides, None sinon.
+    Vérifie l'adresse e-mail et le mot de passe.
+    Retourne l'utilisateur uniquement si l'adresse correspond à un seul compte actif.
     """
-    user = db.query(Utilisateur).filter(
-        Utilisateur.id_etablissement == id_etablissement,
-        Utilisateur.login == login
-    ).first()
+    users = db.query(Utilisateur).filter(
+        func.lower(Utilisateur.email) == email.strip().lower()
+    ).limit(2).all()
 
-    if not user:
+    if len(users) != 1:
         return None
+    user = users[0]
     if not verify_password(mot_de_passe, user.mot_de_passe_hash):
         return None
     if user.statut != "actif":

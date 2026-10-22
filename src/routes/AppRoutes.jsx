@@ -1,8 +1,10 @@
+import { Component } from "react";
 import { Link, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import DashboardLayout from "../layouts/DashboardLayout";
 
 import Login from "../pages/auth/login";
+import Register from "../pages/auth/Register";
 import Dashboard from "../pages/dashboard/Dashboard";
 
 import Etablissements from "../pages/etablissements/Etablissements";
@@ -44,6 +46,39 @@ import CartesScolaires from "../pages/cartes/CartesScolaires";
 import Annonces from "../pages/annonces/Annonces";
 import Messages from "../pages/messages/Messages";
 import Notifications from "../pages/notifications/Notifications";
+
+class RouteErrorBoundary extends Component {
+  state = { error: null };
+
+  static getDerivedStateFromError(error) {
+    return { error };
+  }
+
+  render() {
+    if (this.state.error) {
+      return (
+        <main className="auth-gate" role="alert">
+          <section className="auth-gate-card">
+            <h1>Impossible d’afficher cette page</h1>
+            <p>{this.state.error.message || "Une erreur inattendue est survenue."}</p>
+            <div className="auth-gate-actions">
+              <button
+                className="crud-primary"
+                type="button"
+                onClick={() => this.setState({ error: null })}
+              >
+                Réessayer
+              </button>
+              <Link to="/dashboard">Retour au tableau de bord</Link>
+            </div>
+          </section>
+        </main>
+      );
+    }
+
+    return this.props.children;
+  }
+}
 
 function AuthGate({ error, onRetry }) {
   return (
@@ -101,6 +136,15 @@ export default function AppRoutes() {
       />
 
       <Route
+        path="/register"
+        element={
+          <PublicOnlyRoute>
+            <Register />
+          </PublicOnlyRoute>
+        }
+      />
+
+      <Route
         path="/"
         element={
           <ProtectedRoute>
@@ -113,7 +157,14 @@ export default function AppRoutes() {
 
         <Route path="etablissements" element={<Etablissements />} />
         <Route path="utilisateurs" element={<Utilisateurs />} />
-        <Route path="roles-permissions" element={<RolesPermissions />} />
+        <Route
+          path="roles-permissions"
+          element={
+            <RouteErrorBoundary>
+              <RolesPermissions />
+            </RouteErrorBoundary>
+          }
+        />
         <Route path="journal-activite" element={<JournalActivite />} />
         <Route path="parametres" element={<Parametres />} />
 

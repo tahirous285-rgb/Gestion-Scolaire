@@ -1,13 +1,13 @@
 import { useState } from "react";
-import { GraduationCap, LockKeyhole, LogIn, School, UserRound } from "lucide-react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { GraduationCap, LockKeyhole, LogIn, Mail, School } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 
 function Login() {
   const navigate = useNavigate();
   const location = useLocation();
   const { signIn } = useAuth();
-  const [form, setForm] = useState({ id_etablissement: "", login: "", mot_de_passe: "" });
+  const [form, setForm] = useState({ email: "", mot_de_passe: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -59,16 +59,10 @@ function Login() {
           {error && <div className="login-alert" role="alert">⚠️ {error}</div>}
 
           <form onSubmit={submit} className="login-form">
-            <label htmlFor="id_etablissement">Identifiant de l’établissement</label>
+            <label htmlFor="email">Adresse e-mail</label>
             <div className="login-input-wrap">
-              <School size={18} aria-hidden="true" />
-              <input id="id_etablissement" name="id_etablissement" type="number" min="1" required value={form.id_etablissement} onChange={change} placeholder="Ex. 2" />
-            </div>
-
-            <label htmlFor="login">Identifiant</label>
-            <div className="login-input-wrap">
-              <UserRound size={18} aria-hidden="true" />
-              <input id="login" name="login" required value={form.login} onChange={change} placeholder="Votre identifiant" autoComplete="username" />
+              <Mail size={18} aria-hidden="true" />
+              <input id="email" name="email" type="email" required value={form.email} onChange={change} placeholder="nom@exemple.com" autoComplete="email" />
             </div>
 
             <label htmlFor="mot_de_passe">Mot de passe</label>
@@ -81,7 +75,8 @@ function Login() {
               {loading ? "Connexion…" : <><span>Se connecter</span><LogIn size={18} /></>}
             </button>
           </form>
-          <p className="login-footnote">Les identifiants sont vérifiés par l’API de votre établissement.</p>
+          <p className="login-footnote">Connectez-vous avec l’adresse e-mail associée à votre compte.</p>
+          <Link className="login-secondary" to="/register"><School size={17} /><span>S’inscrire</span></Link>
         </div>
       </section>
     </main>
