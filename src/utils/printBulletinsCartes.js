@@ -66,6 +66,107 @@ async function resolveEleveContext(idInscription, printContext) {
   return { inscription, eleve, classe, annee, etablissement };
 }
 
+
+function renderBulletinPage({
+  bulletin,
+  inscription = {},
+  eleve = {},
+  classe = {},
+  annee = {},
+  etablissement = {},
+  periode = {},
+  lignes = [],
+  pageIndex = 0,
+  pageCount = 1,
+}) {
+  const nom = `${eleve.prenom || ""} ${eleve.nom || ""}`.trim() || `Élève #${inscription.id_eleve || bulletin.id_eleve || "—"}`;
+  const rowsHtml = lignes.length
+    ? lignes.map((line) => `<tr>
+        <td>${escapeHtml(line.matiere || "—")}</td>
+        <td>${escapeHtml(line.evaluation || "—")}</td>
+        <td style="text-align:center;">${escapeHtml(line.coef ?? 1)}</td>
+        <td style="text-align:center;">${escapeHtml(line.note ?? "—")}</td>
+        <td style="text-align:center;">/${escapeHtml(line.bareme ?? 20)}</td>
+        <td>${escapeHtml(line.observation || "—")}</td>
+      </tr>`).join("")
+    : `<tr><td colspan="6" class="muted">Aucune évaluation trouvée pour cette période.</td></tr>`;
+  const pageBreak = pageIndex < pageCount - 1
+    ? "break-after:page;page-break-after:always;"
+    : "";
+  const photo = eleve.photo ? photoBlock(eleve.photo, nom, 82) : "";
+
+  return `
+    <section class="doc bulletin-print-page" style="padding:8px 2px 16px; ${pageBreak}">
+      <header style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;border-bottom:3px solid #1e3a8a;padding-bottom:10px;margin-bottom:12px;">
+        <div style="flex:1;">
+          <p class="muted" style="font-size:10px;letter-spacing:.08em;text-transform:uppercase;">République du Mali — Éducation</p>
+          <h1 style="font-size:21px;color:#1e3a8a;margin-top:4px;">${escapeHtml(etablissement.nom || "Établissement scolaire")}</h1>
+          <p class="muted" style="margin-top:4px;font-size:11px;">${escapeHtml(etablissement.adresse || "")}</p>
+          ${etablissement.telephone ? `<p class="muted" style="font-size:11px;">Tél. : ${escapeHtml(etablissement.telephone)}</p>` : ""}
+        </div>
+        ${photo}
+      </header>
+      <h2 style="text-align:center;font-size:18px;color:#1e3a8a;margin:8px 0 12px;">BULLETIN SCOLAIRE</h2>
+      <table style="margin-bottom:12px;">
+        <tbody>
+          <tr><th>Élève</th><td><strong>${escapeHtml(nom)}</strong></td><th>Matricule</th><td>${escapeHtml(eleve.matricule || "—")}</td></tr>
+          <tr><th>Classe</th><td>${escapeHtml(classe.nom || classe.libelle || inscription.id_classe || "—")}</td><th>Année scolaire</th><td>${escapeHtml(annee.libelle || annee.code || "—")}</td></tr>
+          <tr><th>Période</th><td>${escapeHtml(periode.libelle || periode.code || bulletin.id_periode || "—")}</td><th>Sexe</th><td>${escapeHtml(eleve.sexe || "—")}</td></tr>
+        </tbody>
+      </table>
+      <table style="margin-bottom:12px;">
+        <thead><tr><th>Matière</th><th>Évaluation</th><th>Coef.</th><th>Note</th><th>Barème</th><th>Observation</th></tr></thead>
+        <tbody>${rowsHtml}</tbody>
+      </table>
+      <table style="margin-bottom:18px;">
+        <tbody>
+          <tr><th>Moyenne générale</th><td><strong>${escapeHtml(bulletin.moyenne_generale ?? "—")}${bulletin.moyenne_generale === null || bulletin.moyenne_generale === undefined ? "" : " / 20"}</strong></td>
+              <th>Rang</th><td><strong>${escapeHtml(bulletin.rang ?? "—")}</strong></td></tr>
+          <tr><th>Décision</th><td colspan="3">${escapeHtml(bulletin.decision || "—")}</td></tr>
+          <tr><th>Appréciation</th><td colspan="3" style="min-height:42px;">${escapeHtml(bulletin.appreciation || "—")}</td></tr>
+        </tbody>
+      </table>
+      <div style="display:flex;justify-content:space-between;gap:20px;margin-top:22px;font-size:11px;">
+        <div style="text-align:center;min-width:120px;">Signature du parent<br/><br/><br/>___________________</div>
+        <div style="text-align:center;min-width:120px;">Cachet et signature<br/><br/><br/>___________________</div>
+      </div>
+      <p class="muted" style="margin-top:14px;font-size:10px;text-align:right;">Imprimé le ${escapeHtml(new Date().toLocaleDateString("fr-FR"))}</p>
+    </section>`;
+}
+
+export function printBulletinData(printData) {
+  return prepareAndPrintDocument(async (printContext) => {
+    printContext.setStatus("Préparation du bulletin avec les données de l’élève…");
+    if (!printData?.bulletin || !printData?.inscription) {
+      throw new Error("Les données nécessaires à l’impression de ce bulletin sont incomplètes.");
+    }
+    const studentName = `${printData.eleve?.prenom || ""} ${printData.eleve?.nom || ""}`.trim();
+    return {
+      title: `Bulletin — ${studentName || ("Élève #" + printData.inscription.id_eleve)}`,
+      bodyHtml: renderBulletinPage(printData),
+    };
+  });
+}
+
+export function printBulletinsCollectifs(printDataRows) {
+  return prepareAndPrintDocument(async (printContext) => {
+    if (!Array.isArray(printDataRows) || printDataRows.length === 0) {
+      throw new Error("Aucun bulletin prêt à imprimer pour cette sélection.");
+    }
+    printContext.setStatus("Préparation de " + printDataRows.length + " bulletin(s)…");
+    const html = printDataRows.map((data, index) => {
+      if (!data?.bulletin || !data?.inscription) {
+        throw new Error("Les données d’impression sont incomplètes pour un des bulletins.");
+      }
+      return renderBulletinPage({ ...data, pageIndex: index, pageCount: printDataRows.length });
+    }).join("");
+    return {
+      title: "Bulletins scolaires — classe",
+      bodyHtml: html,
+    };
+  });
+}
+
 export function printBulletin(bulletin) {
   return prepareAndPrintDocument(async (printContext) => {
     const { inscription, eleve, classe, annee, etablissement } = await resolveEleveContext(
@@ -90,68 +191,38 @@ export function printBulletin(bulletin) {
       ),
       requestForPrint("des matières", () => getMatieres()),
     ]);
-    const evalIds = new Set((evaluations || []).map((row) => Number(row.id_evaluation)));
+    const noteByEvaluation = new Map(
+      (notes || []).map((note) => [Number(note.id_evaluation), note]),
+    );
     const matiereById = new Map((matieres || []).map((row) => [Number(row.id_matiere), row]));
-    const evalById = new Map((evaluations || []).map((row) => [Number(row.id_evaluation), row]));
-    const lignes = (notes || [])
-      .filter((note) => evalIds.has(Number(note.id_evaluation)))
-      .map((note) => {
-        const evaluation = evalById.get(Number(note.id_evaluation));
-        const matiere = evaluation ? matiereById.get(Number(evaluation.id_matiere)) : null;
-        return {
-          matiere: matiere?.libelle || matiere?.nom || `Matière #${evaluation?.id_matiere || "—"}`,
-          evaluation: evaluation?.libelle || "—",
-          coef: evaluation?.coefficient ?? 1,
-          bareme: evaluation?.bareme ?? 20,
-          note: note.absence ? "Abs" : note.valeur,
-        };
-      });
+    const lignes = (evaluations || []).map((evaluation) => {
+      const note = noteByEvaluation.get(Number(evaluation.id_evaluation));
+      const matiere = matiereById.get(Number(evaluation.id_matiere));
+      return {
+        matiere: matiere?.nom || matiere?.libelle || `Matière #${evaluation.id_matiere || "—"}`,
+        evaluation: evaluation.libelle || "—",
+        coef: evaluation.coefficient ?? 1,
+        bareme: evaluation.bareme ?? 20,
+        note: !note ? "—" : note.absence ? "Absent" : (note.valeur ?? "—"),
+        observation: note?.observation || "",
+      };
+    });
 
-    const nom = `${eleve.prenom || ""} ${eleve.nom || ""}`.trim() || `Élève #${inscription.id_eleve}`;
-    const rowsHtml = lignes.length
-      ? lignes
-          .map(
-            (line) => `<tr>
-              <td>${escapeHtml(line.matiere)}</td>
-              <td>${escapeHtml(line.evaluation)}</td>
-              <td>${escapeHtml(line.coef)}</td>
-              <td>${escapeHtml(line.note ?? "—")}</td>
-              <td>/${escapeHtml(line.bareme)}</td>
-            </tr>`,
-          )
-          .join("")
-      : `<tr><td colspan="5" class="muted">Aucune note liée à cette période.</td></tr>`;
-
-    const bodyHtml = `
-    <div class="doc" style="padding:18px;">
-      <header style="display:flex;justify-content:space-between;gap:16px;border-bottom:3px solid #1e3a8a;padding-bottom:12px;margin-bottom:16px;">
-        <div>
-          <p class="muted" style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;">République du Mali — Éducation</p>
-          <h1 style="font-size:22px;color:#1e3a8a;margin-top:4px;">${escapeHtml(etablissement?.nom || "Établissement scolaire")}</h1>
-          <p class="muted" style="margin-top:4px;">${escapeHtml(etablissement?.adresse || "")}</p>
-        </div>
-        ${photoBlock(eleve.photo, nom, 92)}
-      </header>
-      <h2 style="text-align:center;font-size:18px;margin-bottom:14px;">Bulletin scolaire</h2>
-      <table style="margin-bottom:16px;">
-        <tr><th>Élève</th><td>${escapeHtml(nom)}</td><th>Matricule</th><td>${escapeHtml(eleve.matricule || "—")}</td></tr>
-        <tr><th>Classe</th><td>${escapeHtml(classe?.libelle || classe?.nom || inscription.id_classe || "—")}</td><th>Année</th><td>${escapeHtml(annee?.libelle || annee?.code || "—")}</td></tr>
-        <tr><th>Période</th><td>${escapeHtml(periode.libelle || periode.code || bulletin.id_periode)}</td><th>Sexe</th><td>${escapeHtml(eleve.sexe || "—")}</td></tr>
-      </table>
-      <table style="margin-bottom:16px;">
-        <thead><tr><th>Matière</th><th>Évaluation</th><th>Coef.</th><th>Note</th><th>Barème</th></tr></thead>
-        <tbody>${rowsHtml}</tbody>
-      </table>
-      <table>
-        <tr><th>Moyenne générale</th><td><strong>${escapeHtml(bulletin.moyenne_generale ?? "—")} / 20</strong></td>
-            <th>Rang</th><td><strong>${escapeHtml(bulletin.rang ?? "—")}</strong></td></tr>
-        <tr><th>Décision</th><td colspan="3">${escapeHtml(bulletin.decision || "—")}</td></tr>
-        <tr><th>Appréciation</th><td colspan="3">${escapeHtml(bulletin.appreciation || "—")}</td></tr>
-      </table>
-      <p class="muted" style="margin-top:28px;font-size:11px;">Document généré le ${escapeHtml(new Date().toLocaleDateString("fr-FR"))}. Utilisez « Imprimer / PDF » puis « Enregistrer au format PDF ».</p>
-    </div>`;
-
-    return { title: `Bulletin — ${nom}`, bodyHtml };
+    return {
+      title: `Bulletin — ${eleve.prenom || ""} ${eleve.nom || ""}`.trim(),
+      bodyHtml: renderBulletinPage({
+        bulletin,
+        inscription,
+        eleve,
+        classe,
+        annee,
+        etablissement,
+        periode,
+        lignes,
+        pageIndex: 0,
+        pageCount: 1,
+      }),
+    };
   });
 }
 
