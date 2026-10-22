@@ -183,10 +183,7 @@ export default function BulletinBatchGenerator({ onGenerated }) {
   }, []);
 
   useEffect(() => {
-    if (!anneeId) {
-      setPeriodes([]);
-      return undefined;
-    }
+    if (!anneeId) return undefined;
 
     let cancelled = false;
     setLoadingPeriodes(true);
@@ -477,7 +474,6 @@ export default function BulletinBatchGenerator({ onGenerated }) {
     }
   }
 
-  const selectedClass = classes.find((row) => Number(row.id_classe) === Number(classeId));
   const canGenerate = !loadingReferences && !loadingPeriodes && !busy &&
     numericId(anneeId) && numericId(classeId) && numericId(periodeId);
 
@@ -581,7 +577,7 @@ export default function BulletinBatchGenerator({ onGenerated }) {
               </div>
 
               <p className="crud-field-help">
-                Les bulletins déjà validés seront conservés sans modification. Une génération interrompue par une limite de l’API ne modifiera aucun bulletin.
+                Si des bulletins sont déjà validés, une confirmation sera demandée avant de recalculer leurs moyennes et rangs. En cas de limite de l’API, la génération s’arrête avant toute modification.
               </p>
 
               {progress && (
