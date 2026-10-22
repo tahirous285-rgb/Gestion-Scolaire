@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { useReferenceOptions } from "../../hooks/useReferenceOptions";
+import BulletinBatchGenerator from "./BulletinBatchGenerator";
 import CrudPage from "../../components/common/CrudPage";
 import { getPeriodes } from "../../services/anneesApi";
 import { getInscriptions } from "../../services/inscriptionsApi";
@@ -21,6 +23,7 @@ async function generateServerPdf(idBulletin) {
 }
 
 export default function Bulletins() {
+  const [refreshKey, setRefreshKey] = useState(0);
   const refs = useReferenceOptions({ inscriptions: getInscriptions, periodes: getPeriodes }, "bulletins");
   const createFields = [
     { name: "id_inscription", label: "Inscription", type: "select", required: true, options: optionsFrom(refs.inscriptions, "id_inscription", (row) => `Inscription #${row.id_inscription} — élève #${row.id_eleve}`) },
@@ -36,8 +39,10 @@ export default function Bulletins() {
 
   return (
     <CrudPage
+      key={refreshKey}
       title="Bulletins"
-      subtitle="L’impression locale utilise le bulletin HTML avec la photo élève. La génération serveur renvoie un objet JSON et un chemin PDF, pas le fichier binaire téléchargeable."
+      subtitle="Consultez, imprimez et gérez les bulletins individuels, ou générez les bulletins de toute une classe à partir des notes enregistrées."
+      toolbarActions={<BulletinBatchGenerator onGenerated={() => setRefreshKey((current) => current + 1)} />}
       icon="📑"
       columns={[
         { key: "id_inscription", label: "Inscription" },
