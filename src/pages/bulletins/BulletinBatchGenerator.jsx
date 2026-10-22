@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { establishmentId } from "../../services/apiClient";
+import { getEtablissement } from "../../services/administrationApi";
 import { getAnnees, getPeriodes } from "../../services/anneesApi";
 import { getClasses } from "../../services/classesApi";
 import { getEleve } from "../../services/elevesApi";
@@ -7,6 +8,8 @@ import { getEvaluations } from "../../services/evaluationsApi";
 import { getInscriptions } from "../../services/inscriptionsApi";
 import { createBulletin, getBulletins, updateBulletin } from "../../services/bulletinsApi";
 import { getNotes } from "../../services/notesApi";
+import { getMatieres } from "../../services/matieresApi";
+import { printBulletinData, printBulletinsCollectifs } from "../../utils/printBulletinsCartes";
 
 const API_LIST_LIMIT = 100;
 
@@ -244,9 +247,13 @@ export default function BulletinBatchGenerator({ onGenerated }) {
     setProgress({ current: 0, total: 0, label: "Vérification des données pédagogiques…" });
 
     try {
-      const [allInscriptions, rawEvaluations] = await Promise.all([
+      const [allInscriptions, rawEvaluations, rawMatieres, etablissement] = await Promise.all([
         getInscriptions({ id_annee: selectedAnneeId }),
         getEvaluations({ id_classe: selectedClasseId, id_periode: selectedPeriodeId }),
+        getMatieres().catch(() => []),
+        establishmentId()
+          ? getEtablissement(establishmentId()).catch(() => null)
+          : Promise.resolve(null),
       ]);
 
       if (!Array.isArray(allInscriptions) || !Array.isArray(rawEvaluations)) {
@@ -328,9 +335,9 @@ export default function BulletinBatchGenerator({ onGenerated }) {
         Promise.all(inscriptions.map(async (inscription) => {
           try {
             const student = await getEleve(Number(inscription.id_eleve));
-            return [Number(inscription.id_inscription), displayStudentName(student, inscription)];
+            return [Number(inscription.id_inscription), student];
           } catch {
-            return [Number(inscription.id_inscription), "Élève #" + inscription.id_eleve];
+            return [Number(inscription.id_inscription), null];
           }
         })),
       ]);
@@ -368,10 +375,55 @@ export default function BulletinBatchGenerator({ onGenerated }) {
         }
       }
 
-      const nameByInscription = new Map(studentEntries);
+      const studentByInscription = new Map(studentEntries);
       const calculationByInscription = new Map(
         calculations.map((row) => [Number(row.id_inscription), row]),
       );
+      const matiereById = new Map(
+        (Array.isArray(rawMatieres) ? rawMatieres : []).map((row) => [Number(row.id_matiere), row]),
+      );
+      const selectedAnnee = annees.find((row) => Number(row.id_annee) === selectedAnneeId) || {};
+      const selectedClasse = classes.find((row) => Number(row.id_classe) === selectedClasseId) || {};
+      const selectedPeriode = periodes.find((row) => Number(row.id_periode) === selectedPeriodeId) || {};
+
+      function makePrintData(inscription, result, existing) {
+        const student = studentByInscription.get(Number(inscription.id_inscription)) || {
+          id_eleve: inscription.id_eleve,
+        };
+        const lignes = evaluations.map((evaluation) => {
+          const note = (notesByEvaluation.get(Number(evaluation.id_evaluation)) || []).find(
+            (row) => Number(row.id_inscription) === Number(inscription.id_inscription),
+          );
+          const matiere = matiereById.get(Number(evaluation.id_matiere));
+          return {
+            matiere: matiere?.nom || matiere?.libelle || ("Matière #" + (evaluation.id_matiere || "—")),
+            evaluation: evaluation.libelle || "—",
+            coef: evaluation.coefficient ?? 1,
+            bareme: evaluation.bareme ?? 20,
+            note: !note ? "—" : note.absence ? "Absent" : (note.valeur ?? "—"),
+            observation: note?.observation || "",
+          };
+        });
+
+        return {
+          bulletin: {
+            id_inscription: Number(inscription.id_inscription),
+            id_periode: selectedPeriodeId,
+            moyenne_generale: result.moyenne_generale,
+            rang: result.rang,
+            appreciation: existing?.appreciation || "",
+            decision: existing?.decision || "",
+            valide: Boolean(existing?.valide),
+          },
+          inscription,
+          eleve: student,
+          classe: selectedClasse,
+          annee: selectedAnnee,
+          periode: selectedPeriode,
+          etablissement: etablissement || {},
+          lignes,
+        };
+      }
       const summary = {
         created: 0,
         updated: 0,
@@ -392,7 +444,9 @@ export default function BulletinBatchGenerator({ onGenerated }) {
         const idInscription = Number(inscription.id_inscription);
         const result = calculationByInscription.get(idInscription);
         const existing = existingByInscription.get(idInscription);
-        const studentName = nameByInscription.get(idInscription) || ("Élève #" + inscription.id_eleve);
+        const student = studentByInscription.get(idInscription);
+        const studentName = displayStudentName(student, inscription);
+        const printData = makePrintData(inscription, result, existing);
 
         try {
           const wasValidated = Boolean(existing && existing.valide);
@@ -417,6 +471,7 @@ export default function BulletinBatchGenerator({ onGenerated }) {
               statut: wasValidated
                 ? "Bulletin recalculé — validation réinitialisée"
                 : "Bulletin actualisé",
+              printData,
             });
           } else {
             await createBulletin({
@@ -433,6 +488,7 @@ export default function BulletinBatchGenerator({ onGenerated }) {
               moyenne_generale: result.moyenne_generale,
               rang: result.rang,
               statut: "Bulletin créé",
+              printData,
             });
           }
         } catch (writeError) {
