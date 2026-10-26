@@ -1,3 +1,5 @@
+import re
+import unicodedata
 from sqlalchemy.orm import Session
 from app.models.scolarite import AnneeScolaire, Periode, Classe, Matiere, ClasseMatiere
 from app.schemas.scolarite import (
@@ -89,7 +91,25 @@ def get_matiere(db: Session, id_matiere: int):
 
 
 def create_matiere(db: Session, data: MatiereCreate):
-    db_obj = Matiere(**data.model_dump())
+    payload = data.model_dump()
+    code = (payload.get("code") or "").strip().upper()
+    if not code:
+        normalized_name = unicodedata.normalize("NFKD", payload["nom"])
+        ascii_name = normalized_name.encode("ascii", "ignore").decode("ascii")
+        base_code = re.sub(r"[^A-Z0-9]+", "-", ascii_name.upper()).strip("-") or "MATIERE"
+        base_code = base_code[:50].rstrip("-") or "MATIERE"
+        code = base_code
+        suffix = 2
+        while db.query(Matiere.id_matiere).filter(
+            Matiere.id_etablissement == payload["id_etablissement"],
+            Matiere.code == code,
+        ).first():
+            suffix_text = f"-{suffix}"
+            code = f"{base_code[:50 - len(suffix_text)].rstrip('-')}{suffix_text}"
+            suffix += 1
+        payload["code"] = code
+
+    db_obj = Matiere(**payload)
     db.add(db_obj)
     db.commit()
     db.refresh(db_obj)

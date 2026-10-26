@@ -2,11 +2,15 @@ import CrudPage from "../../components/common/CrudPage";
 import { establishmentId } from "../../services/apiClient";
 import { createMatiere, deleteMatiere, getMatieres, updateMatiere } from "../../services/matieresApi";
 
-const fields = [
-  { name: "code", label: "Code", required: true },
+const createFields = [
   { name: "nom", label: "Nom", required: true },
-  { name: "description", label: "Description", type: "textarea", full: true },
-  { name: "actif", label: "Matière active", type: "checkbox", default: true },
+  { name: "description", label: "Description", type: "textarea", full: true, help: "Informations complémentaires sur la matière." },
+  { name: "actif", label: "Matière active", type: "checkbox", default: true, help: "Disponible pour les affectations scolaires." },
+];
+
+const editFields = [
+  { name: "code", label: "Code de la matière", required: true },
+  ...createFields.map((field) => ({ ...field, required: false })),
 ];
 
 export default function Matieres() {
@@ -17,8 +21,8 @@ export default function Matieres() {
       subtitle="Catalogue des matières enseignées."
       icon="📚"
       columns={[{ key: "code", label: "Code" }, { key: "nom", label: "Nom" }, { key: "description", label: "Description" }, { key: "actif", label: "Statut", render: (row) => row.actif ? "Active" : "Inactive" }]}
-      createFields={fields}
-      editFields={fields.map((field) => ({ ...field, required: false }))}
+      createFields={createFields}
+      editFields={editFields}
       initialForm={{ id_etablissement: idEtablissement || "", code: "", nom: "", description: "", actif: true }}
       load={getMatieres}
       create={createMatiere}

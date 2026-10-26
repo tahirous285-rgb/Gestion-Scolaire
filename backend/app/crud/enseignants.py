@@ -1,3 +1,4 @@
+from uuid import uuid4
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
 from app.models.enseignants import Enseignant, EnseignantMatiere, EnseignantClasse
@@ -18,7 +19,9 @@ def get_enseignant(db: Session, id_enseignant: int):
 
 
 def create_enseignant(db: Session, data: EnseignantCreate):
-    db_obj = Enseignant(**data.model_dump())
+    payload = data.model_dump()
+    payload["matricule"] = f"ENS-{uuid4().hex[:8].upper()}"
+    db_obj = Enseignant(**payload)
     db.add(db_obj)
     db.commit()
     db.refresh(db_obj)

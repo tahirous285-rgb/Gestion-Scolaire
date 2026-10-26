@@ -6,7 +6,7 @@ from datetime import date
 # ---------- ENSEIGNANT ----------
 class EnseignantBase(BaseModel):
     id_etablissement: int
-    matricule: str
+    matricule: Optional[str] = None
     nom: str
     prenom: str
     sexe: Optional[str] = None
@@ -15,6 +15,7 @@ class EnseignantBase(BaseModel):
     email: Optional[str] = None
     adresse: Optional[str] = None
     date_embauche: Optional[date] = None
+    type_contrat: Optional[str] = None
     statut: Optional[str] = "actif"
     taux_horaire: Optional[float] = None
     actif: Optional[bool] = True
@@ -25,7 +26,6 @@ class EnseignantCreate(EnseignantBase):
 
 
 class EnseignantUpdate(BaseModel):
-    matricule: Optional[str] = None
     nom: Optional[str] = None
     prenom: Optional[str] = None
     sexe: Optional[str] = None
@@ -33,6 +33,8 @@ class EnseignantUpdate(BaseModel):
     telephone: Optional[str] = None
     email: Optional[str] = None
     adresse: Optional[str] = None
+    date_embauche: Optional[date] = None
+    type_contrat: Optional[str] = None
     statut: Optional[str] = None
     taux_horaire: Optional[float] = None
     actif: Optional[bool] = None

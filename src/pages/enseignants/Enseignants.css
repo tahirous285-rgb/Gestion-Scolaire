@@ -1,4 +1,96 @@
-.enseignants-page {
+.teacher-overlay {
+  z-index: 100;
+}
+
+.teacher-modal {
+  width: min(820px, 100%);
+}
+
+.teacher-modal > .crud-modal-head {
+  position: sticky;
+  z-index: 2;
+  top: 0;
+  background: #fff;
+}
+
+.teacher-form {
+  max-height: calc(91vh - 86px);
+  overflow-y: auto;
+}
+
+.teacher-form-section {
+  padding: 0 0 21px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--line);
+}
+
+.teacher-form-section h3 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 15px;
+  color: var(--ink);
+  font-family: Manrope, sans-serif;
+  font-size: 14px;
+}
+
+.teacher-form-section h3 span {
+  display: grid;
+  flex: 0 0 25px;
+  place-items: center;
+  width: 25px;
+  height: 25px;
+  border-radius: 7px;
+  color: var(--primary);
+  background: var(--primary-soft);
+  font-size: 12px;
+}
+
+.teacher-form .crud-field input[readonly] {
+  color: var(--muted);
+  background: #f7f8fa;
+}
+
+.teacher-form .crud-check {
+  min-height: 72px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.teacher-form .crud-check span small,
+.teacher-form .crud-check span strong {
+  display: block;
+}
+
+.teacher-form .crud-check span small {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 400;
+}
+
+.teacher-form .crud-check span strong {
+  margin-top: 6px;
+  color: #16815e;
+  font-size: 11px;
+}
+
+.teacher-toolbar-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+@media (max-width: 600px) {
+  .teacher-form-section .crud-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .teacher-form-section .crud-field.full {
+    grid-column: auto;
+  }
+}.enseignants-page {
   padding: 24px;
   min-height: 100%;
 }

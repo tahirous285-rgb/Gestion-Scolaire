@@ -13,7 +13,6 @@ export default function AnneesPeriodes() {
   const periodsLoad = useMemo(() => () => getPeriodes(), []);
 
   const yearFields = [
-    { name: "id_etablissement", label: "ID établissement", type: "number", required: true, default: idEtablissement || "" },
     { name: "libelle", label: "Libellé", required: true, placeholder: "2025-2026" },
     { name: "date_debut", label: "Date de début", type: "date", required: true },
     { name: "date_fin", label: "Date de fin", type: "date", required: true },
@@ -41,9 +40,10 @@ export default function AnneesPeriodes() {
           { key: "statut", label: "Statut" },
         ]}
         fields={yearFields}
-        initialForm={{ id_etablissement: idEtablissement || "", libelle: "", date_debut: "", date_fin: "", statut: "active" }}
+        initialForm={{ libelle: "", date_debut: "", date_fin: "", statut: "active" }}
         load={yearsLoad}
         create={createAnnee}
+        createPayload={(data) => ({ ...data, id_etablissement: idEtablissement })}
         canUpdate={false}
         canDelete={false}
         rowKey="id_annee"

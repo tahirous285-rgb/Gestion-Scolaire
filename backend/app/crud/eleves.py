@@ -1,3 +1,4 @@
+from uuid import uuid4
 from sqlalchemy.orm import Session
 from app.models.eleves import Eleve, Parent, EleveParent, Inscription
 from app.schemas.eleves import (
@@ -18,7 +19,9 @@ def get_eleve(db: Session, id_eleve: int):
 
 
 def create_eleve(db: Session, data: EleveCreate):
-    db_obj = Eleve(**data.model_dump())
+    payload = data.model_dump()
+    payload["matricule"] = f"ELV-{uuid4().hex[:8].upper()}"
+    db_obj = Eleve(**payload)
     db.add(db_obj)
     db.commit()
     db.refresh(db_obj)

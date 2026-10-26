@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import { fileToStoredPhoto, photoUrl, PHOTO_ACCEPT } from "../../utils/imageFile";
 import "./EleveForm.css";
 
-const empty = { matricule: "", nom: "", prenom: "", sexe: "", date_naissance: "", lieu_naissance: "", nationalite: "", adresse: "", telephone: "", email: "", photo: "", actif: true };
+const empty = { nom: "", prenom: "", sexe: "", date_naissance: "", lieu_naissance: "", nationalite: "", adresse: "", telephone: "", email: "", photo: "", actif: true };
 
 /**
  * Formulaire réutilisable pour les intégrations qui préfèrent un formulaire
@@ -69,8 +69,8 @@ export default function EleveForm({ eleveInitial = null, onClose, onSave, loadin
   return (
     <form className="standalone-form" onSubmit={submit}>
       <div className="standalone-form-grid">
-        {["matricule", "nom", "prenom", "sexe", "date_naissance", "lieu_naissance", "nationalite", "telephone", "email"].map((name) => (
-          <label key={name}>{name.replaceAll("_", " ")} {["matricule", "nom", "prenom"].includes(name) && "*"}<input name={name} type={name === "date_naissance" ? "date" : name === "email" ? "email" : "text"} required={["matricule", "nom", "prenom"].includes(name)} value={form[name] || ""} onChange={change} disabled={loading || readingPhoto} /></label>
+        {["nom", "prenom", "sexe", "date_naissance", "lieu_naissance", "nationalite", "telephone", "email"].map((name) => (
+          <label key={name}>{name.replaceAll("_", " ")} {["nom", "prenom"].includes(name) && "*"}<input name={name} type={name === "date_naissance" ? "date" : name === "email" ? "email" : "text"} required={["nom", "prenom"].includes(name)} value={form[name] || ""} onChange={change} disabled={loading || readingPhoto} /></label>
         ))}
         <div className="standalone-full standalone-photo-field">
           <span className="standalone-photo-label">Photo de l’élève</span>

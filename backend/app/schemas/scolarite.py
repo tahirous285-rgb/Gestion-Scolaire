@@ -83,7 +83,7 @@ class MatiereBase(BaseModel):
 
 
 class MatiereCreate(MatiereBase):
-    pass
+    code: Optional[str] = None
 
 
 class MatiereUpdate(BaseModel):

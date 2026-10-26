@@ -6,7 +6,7 @@ from datetime import date, datetime
 # ---------- ELEVE ----------
 class EleveBase(BaseModel):
     id_etablissement: int
-    matricule: str
+    matricule: Optional[str] = None
     nom: str
     prenom: str
     sexe: Optional[str] = None
@@ -40,6 +40,7 @@ class EleveUpdate(BaseModel):
 
 
 class EleveRead(EleveBase):
+    matricule: str
     id_eleve: int
     date_creation: datetime
     date_modification: datetime

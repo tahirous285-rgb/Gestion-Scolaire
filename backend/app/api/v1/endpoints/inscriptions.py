@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from app.core.dependencies import get_db
 from app.schemas.eleves import InscriptionCreate, InscriptionUpdate, InscriptionRead
@@ -8,8 +8,20 @@ router = APIRouter()
 
 
 @router.get("/", response_model=list[InscriptionRead])
-def list_inscriptions(id_eleve: int = None, id_annee: int = None, db: Session = Depends(get_db)):
-    return crud.get_inscriptions(db, id_eleve=id_eleve, id_annee=id_annee)
+def list_inscriptions(
+    id_eleve: int = None,
+    id_annee: int = None,
+    skip: int = Query(default=0, ge=0),
+    limit: int = Query(default=1000, ge=1, le=1000),
+    db: Session = Depends(get_db),
+):
+    return crud.get_inscriptions(
+        db,
+        id_eleve=id_eleve,
+        id_annee=id_annee,
+        skip=skip,
+        limit=limit,
+    )
 
 
 @router.get("/{id_inscription}", response_model=InscriptionRead)

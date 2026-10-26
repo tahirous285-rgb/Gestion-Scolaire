@@ -16,6 +16,7 @@ class Enseignant(Base):
     email = Column(String, nullable=True)
     adresse = Column(String, nullable=True)
     date_embauche = Column(Date, nullable=True)
+    type_contrat = Column(String, nullable=True)
     statut = Column(String, default="actif")
     taux_horaire = Column(Float, nullable=True)
     actif = Column(Boolean, default=True)

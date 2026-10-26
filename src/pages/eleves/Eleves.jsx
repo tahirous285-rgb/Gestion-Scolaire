@@ -5,7 +5,6 @@ import { photoUrl } from "../../utils/imageFile";
 import { formatDate } from "../pageUtils";
 
 const fields = [
-  { name: "matricule", label: "Matricule", required: true },
   { name: "nom", label: "Nom", required: true },
   { name: "prenom", label: "Prénom", required: true },
   { name: "sexe", label: "Sexe" },
@@ -42,7 +41,7 @@ export default function Eleves() {
       ]}
       createFields={fields}
       editFields={fields.map((field) => ({ ...field, required: false }))}
-      initialForm={{ id_etablissement: idEtablissement || "", matricule: "", nom: "", prenom: "", sexe: "", date_naissance: "", lieu_naissance: "", nationalite: "", adresse: "", telephone: "", email: "", photo: "", actif: true }}
+      initialForm={{ id_etablissement: idEtablissement || "", nom: "", prenom: "", sexe: "", date_naissance: "", lieu_naissance: "", nationalite: "", adresse: "", telephone: "", email: "", photo: "", actif: true }}
       load={getEleves}
       pagination={{ pageSize: 100 }}
       create={createEleve}
