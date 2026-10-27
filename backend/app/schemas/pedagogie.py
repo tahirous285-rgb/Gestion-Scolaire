@@ -16,6 +16,7 @@ class EvaluationBase(BaseModel):
     bareme: float = 20
     coefficient: float = 1
     observation: Optional[str] = None
+    notes_validees: bool = False
 
 
 class EvaluationCreate(EvaluationBase):
@@ -57,9 +58,26 @@ class NoteRead(NoteBase):
         from_attributes = True
 
 
+class NoteSaisieEntry(BaseModel):
+    id_inscription: int
+    valeur: Optional[float] = None
+    absence: bool = False
+
+
+class NoteSaisieRequest(BaseModel):
+    notes: list[NoteSaisieEntry]
+    valider: bool = False
+
+
+class NoteSaisieResponse(BaseModel):
+    notes: list[NoteRead]
+    notes_validees: bool
+
+
 # ---------- PRESENCE_ELEVE ----------
 class PresenceEleveBase(BaseModel):
     id_inscription: int
+    id_matiere: Optional[int] = None
     date_presence: date
     statut: str
     heure_arrivee: Optional[str] = None
@@ -88,6 +106,28 @@ class PresenceEleveRead(PresenceEleveBase):
 
     class Config:
         from_attributes = True
+
+
+class PresenceAppelEntry(BaseModel):
+    id_inscription: int
+    statut: str
+    motif: Optional[str] = None
+    justifiee: bool = False
+    observation: Optional[str] = None
+
+
+class PresenceAppelRequest(BaseModel):
+    id_annee: int
+    id_classe: int
+    id_matiere: int
+    date_presence: date
+    id_utilisateur: Optional[int] = None
+    presences: list[PresenceAppelEntry]
+
+
+class PresenceAppelResponse(BaseModel):
+    presences: list[PresenceEleveRead]
+    enregistrees: int
 
 
 # ---------- BULLETIN ----------

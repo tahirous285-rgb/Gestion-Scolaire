@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from app.core.dependencies import get_db
-from app.schemas.pedagogie import NoteCreate, NoteUpdate, NoteRead
+from app.schemas.pedagogie import NoteCreate, NoteUpdate, NoteRead, NoteSaisieRequest, NoteSaisieResponse
 from app.crud import pedagogie as crud
 
 router = APIRouter()
@@ -22,6 +22,15 @@ def list_notes(
         skip=skip,
         limit=limit,
     )
+
+
+@router.put("/evaluation/{id_evaluation}/saisie", response_model=NoteSaisieResponse)
+def save_evaluation_notes(
+    id_evaluation: int,
+    data: NoteSaisieRequest,
+    db: Session = Depends(get_db),
+):
+    return crud.enregistrer_saisie_notes(db, id_evaluation, data)
 
 
 @router.get("/{id_note}", response_model=NoteRead)

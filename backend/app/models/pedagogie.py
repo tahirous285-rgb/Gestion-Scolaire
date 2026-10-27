@@ -18,6 +18,7 @@ class Evaluation(Base):
     bareme = Column(Float, nullable=False, default=20)
     coefficient = Column(Float, nullable=False, default=1)
     observation = Column(String, nullable=True)
+    notes_validees = Column(Boolean, nullable=False, default=False)
 
 
 class Note(Base):
@@ -42,6 +43,7 @@ class PresenceEleve(Base):
 
     id_presence = Column(Integer, primary_key=True, index=True)
     id_inscription = Column(Integer, ForeignKey("inscription.id_inscription"), nullable=False)
+    id_matiere = Column(Integer, ForeignKey("matiere.id_matiere"), nullable=True)
     date_presence = Column(Date, nullable=False)
     statut = Column(String, nullable=False)  # PRESENT, ABSENT, RETARD, EXCUSE
     heure_arrivee = Column(String, nullable=True)
