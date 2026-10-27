@@ -10,6 +10,7 @@ import { createBulletin, getBulletins, updateBulletin } from "../../services/bul
 import { getNotes } from "../../services/notesApi";
 import { getMatieres } from "../../services/matieresApi";
 import { printBulletinData, printBulletinsCollectifs } from "../../utils/printBulletinsCartes";
+import { computeClassResults, isEligibleInscription } from "../../utils/bulletinCalculations";
 
 const API_LIST_LIMIT = 100;
 
@@ -18,103 +19,10 @@ function numericId(value) {
   return Number.isInteger(id) && id > 0 ? id : null;
 }
 
-function isEligibleInscription(inscription) {
-  const status = String(inscription.statut || "active").trim().toLowerCase();
-  return ![
-    "inactive", "inactif", "inactife", "annule", "annulé", "annulée",
-    "supprime", "supprimé", "supprimée", "radie", "radié", "radiée",
-  ].includes(status);
-}
-
 function displayStudentName(student, inscription) {
   if (!student) return "Élève #" + inscription.id_eleve;
   const fullName = [student.prenom, student.nom].filter(Boolean).join(" ").trim();
   return fullName || ("Élève #" + inscription.id_eleve);
-}
-
-function computeClassResults(inscriptions, evaluations, notesByEvaluation) {
-  const eligibleIds = new Set(inscriptions.map((row) => Number(row.id_inscription)));
-  const notesByInscription = new Map(
-    inscriptions.map((row) => [Number(row.id_inscription), []]),
-  );
-
-  evaluations.forEach((evaluation) => {
-    const evaluationNotes = notesByEvaluation.get(Number(evaluation.id_evaluation)) || [];
-    evaluationNotes.forEach((note) => {
-      const inscriptionId = Number(note.id_inscription);
-      if (!eligibleIds.has(inscriptionId)) return;
-      notesByInscription.get(inscriptionId).push({ note, evaluation });
-    });
-  });
-
-  const results = inscriptions.map((inscription) => {
-    let weightedTotal = 0;
-    let coefficientTotal = 0;
-    let validNoteCount = 0;
-
-    for (const entry of notesByInscription.get(Number(inscription.id_inscription)) || []) {
-      const rawValue = entry.note.valeur;
-      if (rawValue === null || rawValue === undefined || String(rawValue).trim() === "") continue;
-
-      const value = Number(rawValue);
-      if (!Number.isFinite(value)) continue;
-
-      const bareme = Number(entry.evaluation.bareme);
-      const coefficient = Number(
-        entry.evaluation.coefficient === null || entry.evaluation.coefficient === undefined
-          ? 1
-          : entry.evaluation.coefficient,
-      );
-
-      if (!Number.isFinite(bareme) || bareme <= 0) {
-        throw new Error(
-          "Barème invalide pour l’évaluation « " +
-          (entry.evaluation.libelle || ("#" + entry.evaluation.id_evaluation)) +
-          " ». Le barème doit être supérieur à zéro.",
-        );
-      }
-      if (!Number.isFinite(coefficient) || coefficient < 0) {
-        throw new Error(
-          "Coefficient invalide pour l’évaluation « " +
-          (entry.evaluation.libelle || ("#" + entry.evaluation.id_evaluation)) +
-          " ». Vérifiez sa configuration avant de générer les bulletins.",
-        );
-      }
-
-      const scoreOnTwenty = (value / bareme) * 20;
-      weightedTotal += scoreOnTwenty * coefficient;
-      coefficientTotal += coefficient;
-      validNoteCount += 1;
-    }
-
-    const average = validNoteCount > 0 && coefficientTotal > 0
-      ? Math.round((weightedTotal / coefficientTotal + Number.EPSILON) * 100) / 100
-      : null;
-
-    return {
-      id_inscription: Number(inscription.id_inscription),
-      id_eleve: Number(inscription.id_eleve),
-      moyenne_generale: average,
-      rang: null,
-      nombre_notes: validNoteCount,
-    };
-  });
-
-  const ranked = results
-    .filter((result) => result.moyenne_generale !== null)
-    .sort((left, right) => right.moyenne_generale - left.moyenne_generale);
-
-  let currentRank = 0;
-  let previousAverage = null;
-  ranked.forEach((result, index) => {
-    if (index === 0 || result.moyenne_generale !== previousAverage) {
-      currentRank = index + 1;
-    }
-    result.rang = currentRank;
-    previousAverage = result.moyenne_generale;
-  });
-
-  return results;
 }
 
 function formatAverage(value) {
@@ -595,6 +503,9 @@ export default function BulletinBatchGenerator({ onGenerated }) {
                       <option key={row.id_annee} value={row.id_annee}>{row.libelle}</option>
                     ))}
                   </select>
+                  {!loadingReferences && !referenceError && annees.length === 0 && (
+                    <small role="status">Aucune année scolaire n’est rattachée à l’établissement de votre session.</small>
+                  )}
                 </div>
 
                 <div className="crud-field">
@@ -613,10 +524,13 @@ export default function BulletinBatchGenerator({ onGenerated }) {
                     <option value="">Sélectionner une classe…</option>
                     {classes.map((row) => (
                       <option key={row.id_classe} value={row.id_classe}>
-                        {row.nom}{row.niveau ? " — " + row.niveau : ""}
+                        {row.nom}
                       </option>
                     ))}
                   </select>
+                  {!loadingReferences && !referenceError && classes.length === 0 && (
+                    <small role="status">Aucune classe n’est rattachée à l’établissement de votre session.</small>
+                  )}
                 </div>
 
                 <div className="crud-field full">
@@ -635,7 +549,7 @@ export default function BulletinBatchGenerator({ onGenerated }) {
                     <option value="">Sélectionner une période…</option>
                     {periodes.map((row) => (
                       <option key={row.id_periode} value={row.id_periode}>
-                        {row.code} — {row.libelle}
+                        {row.libelle}
                       </option>
                     ))}
                   </select>

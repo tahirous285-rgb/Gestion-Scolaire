@@ -10,13 +10,28 @@ from app.schemas.pedagogie import (
 
 
 # ---------- EVALUATION ----------
-def get_evaluations(db: Session, id_classe: int = None, id_periode: int = None, skip: int = 0, limit: int = 100):
+def get_evaluations(
+    db: Session,
+    id_annee: int = None,
+    id_classe: int = None,
+    id_matiere: int = None,
+    id_enseignant: int = None,
+    id_periode: int = None,
+    skip: int = 0,
+    limit: int = 100,
+):
     query = db.query(Evaluation)
+    if id_annee:
+        query = query.filter(Evaluation.id_annee == id_annee)
     if id_classe:
         query = query.filter(Evaluation.id_classe == id_classe)
+    if id_matiere:
+        query = query.filter(Evaluation.id_matiere == id_matiere)
+    if id_enseignant:
+        query = query.filter(Evaluation.id_enseignant == id_enseignant)
     if id_periode:
         query = query.filter(Evaluation.id_periode == id_periode)
-    return query.offset(skip).limit(limit).all()
+    return query.order_by(Evaluation.id_evaluation.desc()).offset(skip).limit(limit).all()
 
 
 def get_evaluation(db: Session, id_evaluation: int):
@@ -38,7 +53,7 @@ def get_notes(db: Session, id_evaluation: int = None, id_inscription: int = None
         query = query.filter(Note.id_evaluation == id_evaluation)
     if id_inscription:
         query = query.filter(Note.id_inscription == id_inscription)
-    return query.offset(skip).limit(limit).all()
+    return query.order_by(Note.id_note).offset(skip).limit(limit).all()
 
 
 def get_note(db: Session, id_note: int):

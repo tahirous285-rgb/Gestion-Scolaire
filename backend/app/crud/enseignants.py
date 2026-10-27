@@ -14,6 +14,35 @@ def get_enseignants(db: Session, skip: int = 0, limit: int = 100):
     return db.query(Enseignant).offset(skip).limit(limit).all()
 
 
+def get_enseignants_affectes(db: Session, id_annee: int, id_classe: int, id_matiere: int):
+    return (
+        db.query(Enseignant)
+        .join(EnseignantClasse, EnseignantClasse.id_enseignant == Enseignant.id_enseignant)
+        .join(EnseignantMatiere, EnseignantMatiere.id_enseignant == Enseignant.id_enseignant)
+        .filter(
+            EnseignantClasse.id_annee == id_annee,
+            EnseignantClasse.id_classe == id_classe,
+            EnseignantMatiere.id_matiere == id_matiere,
+        )
+        .order_by(Enseignant.nom, Enseignant.prenom)
+        .all()
+    )
+
+
+def get_enseignants_de_classe(db: Session, id_annee: int, id_classe: int):
+    return (
+        db.query(Enseignant)
+        .join(EnseignantClasse, EnseignantClasse.id_enseignant == Enseignant.id_enseignant)
+        .filter(
+            EnseignantClasse.id_annee == id_annee,
+            EnseignantClasse.id_classe == id_classe,
+            Enseignant.actif.is_(True),
+        )
+        .order_by(Enseignant.nom, Enseignant.prenom)
+        .all()
+    )
+
+
 def get_enseignant(db: Session, id_enseignant: int):
     return db.query(Enseignant).filter(Enseignant.id_enseignant == id_enseignant).first()
 

@@ -16,6 +16,21 @@ def list_enseignants(skip: int = 0, limit: int = 100, db: Session = Depends(get_
     return crud.get_enseignants(db, skip=skip, limit=limit)
 
 
+@router.get("/affectes", response_model=list[EnseignantRead])
+def list_enseignants_affectes(id_annee: int, id_classe: int, id_matiere: int, db: Session = Depends(get_db)):
+    return crud.get_enseignants_affectes(
+        db,
+        id_annee=id_annee,
+        id_classe=id_classe,
+        id_matiere=id_matiere,
+    )
+
+
+@router.get("/affectes-classe", response_model=list[EnseignantRead])
+def list_enseignants_de_classe(id_annee: int, id_classe: int, db: Session = Depends(get_db)):
+    return crud.get_enseignants_de_classe(db, id_annee=id_annee, id_classe=id_classe)
+
+
 @router.get("/{id_enseignant}", response_model=EnseignantRead)
 def get_enseignant(id_enseignant: int, db: Session = Depends(get_db)):
     obj = crud.get_enseignant(db, id_enseignant)

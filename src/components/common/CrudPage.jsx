@@ -349,8 +349,9 @@ export default function CrudPage({
         );
         action = "update";
       } else if (create) {
-        const payload = serializeForm(form, createFields);
-        await create(createPayload ? createPayload(payload) : payload);
+        const serialized = serializeForm(form, createFields);
+        const payload = createPayload ? await createPayload(serialized) : serialized;
+        await create(payload);
         action = "create";
       }
       if (!mountedRef.current) return;

@@ -1,7 +1,7 @@
 import { apiDelete, apiGet, apiPost, apiPut } from "./apiClient";
 
-export const getNotes = ({ id_evaluation, id_inscription } = {}) =>
-  apiGet("/notes/", { id_evaluation, id_inscription });
+export const getNotes = ({ id_evaluation, id_inscription, skip = 0, limit = 1000 } = {}) =>
+  apiGet("/notes/", { id_evaluation, id_inscription, skip, limit });
 export const getNote = (id) => apiGet(`/notes/${id}`);
 export const createNote = (data) => apiPost("/notes/", data);
 export const updateNote = (id, data) => apiPut(`/notes/${id}`, data);

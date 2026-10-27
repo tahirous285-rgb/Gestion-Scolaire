@@ -1,1 +1,49 @@
-/* Les styles partagés sont centralisés dans src/index.css. */
+.evaluation-page { max-width: 1500px; margin: 0 auto; }
+.evaluation-header { align-items: flex-end; }
+.evaluation-header h1 { margin: 0; color: var(--ink); font-family: Manrope, sans-serif; font-size: 27px; }
+.evaluation-header p { color: var(--muted); font-size: 13px; }
+.evaluation-create-panel, .evaluation-filters, .grade-entry-panel { padding: 22px; }
+.evaluation-create-panel .inline-panel-heading p { max-width: 620px; }
+.evaluation-form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.evaluation-field, .evaluation-filter-grid label { display: flex; min-width: 0; flex-direction: column; gap: 7px; color: var(--muted-dark); font-size: 11px; font-weight: 700; }
+.evaluation-field input, .evaluation-field select, .evaluation-field textarea, .evaluation-filter-grid select, .grade-table input[type="number"] { width: 100%; min-height: 41px; padding: 9px 11px; border: 1px solid var(--line); border-radius: 7px; background: #fff; color: var(--ink); font: inherit; font-size: 13px; }
+.evaluation-field textarea { resize: vertical; }
+.evaluation-field small { color: #a34a34; font-size: 11px; line-height: 1.4; }
+.teacher-assignment-help { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; color: #8a5a14; font-size: 11px; line-height: 1.45; }
+.teacher-assignment-help .crud-secondary { min-height: 34px; padding: 7px 10px; text-align: left; }
+.evaluation-field-wide { grid-column: 1 / -1; }
+.evaluation-form-actions { display: flex; grid-column: 1 / -1; justify-content: flex-end; gap: 9px; padding-top: 16px; border-top: 1px solid var(--line); }
+.evaluation-filters { padding-bottom: 18px; }
+.evaluation-filter-grid { display: grid; grid-template-columns: repeat(6, minmax(120px, 1fr)); gap: 12px; }
+.evaluation-table-card { margin: 0 34px 18px; overflow: hidden; }
+.evaluation-table { min-width: 900px; }
+.evaluation-table td small { display: block; margin-top: 4px; color: var(--muted); font-size: 10px; }
+.evaluation-status { display: inline-flex; padding: 5px 8px; border-radius: 99px; font-size: 10px; font-weight: 700; white-space: nowrap; }
+.evaluation-status.status-done { color: #147955; background: #e9f8f1; }
+.evaluation-status.status-upcoming { color: #2857a4; background: #edf4ff; }
+.evaluation-status.status-progress { color: #8a5a14; background: #fff4dd; }
+.evaluation-status.status-draft { color: #66738a; background: #f0f2f6; }
+.evaluation-grade-button { min-height: 34px; padding: 7px 10px; white-space: nowrap; }
+.grade-entry-panel { scroll-margin-top: 20px; }
+.grade-summary { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin: 4px 0 14px; color: var(--ink); font-size: 12px; }
+.grade-summary span { color: var(--muted); font-size: 11px; }
+.roster-info { margin: 0 0 14px; padding: 11px 13px; border-left: 3px solid #d5a33b; border-radius: 0 7px 7px 0; color: #655323; background: #fff9e9; font-size: 11px; line-height: 1.55; }
+.grade-table { min-width: 620px; }
+.grade-table input[type="number"] { max-width: 180px; }
+.grade-absence { display: inline-flex; align-items: center; gap: 7px; color: var(--muted-dark); font-size: 12px; }
+.grade-absence input { width: 16px; height: 16px; accent-color: var(--primary); }
+.grade-entry-panel .evaluation-form-actions { margin-top: 14px; }
+@media (max-width: 1050px) { .evaluation-filter-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 760px) {
+  .evaluation-header { align-items: flex-start; flex-direction: column; }
+  .evaluation-header .crud-primary { width: 100%; }
+  .evaluation-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .evaluation-filter-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .evaluation-table-card, .grade-entry-panel { margin-right: 20px; margin-left: 20px; }
+}
+@media (max-width: 480px) {
+  .evaluation-form, .evaluation-filter-grid { grid-template-columns: 1fr; }
+  .evaluation-field-wide, .evaluation-form-actions { grid-column: auto; }
+  .evaluation-form-actions { flex-wrap: wrap; }
+  .evaluation-form-actions button { flex: 1; }
+}/* Les styles partagés sont centralisés dans src/index.css. */

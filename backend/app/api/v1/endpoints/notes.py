@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from app.core.dependencies import get_db
 from app.schemas.pedagogie import NoteCreate, NoteUpdate, NoteRead
@@ -8,8 +8,20 @@ router = APIRouter()
 
 
 @router.get("/", response_model=list[NoteRead])
-def list_notes(id_evaluation: int = None, id_inscription: int = None, db: Session = Depends(get_db)):
-    return crud.get_notes(db, id_evaluation=id_evaluation, id_inscription=id_inscription)
+def list_notes(
+    id_evaluation: int = None,
+    id_inscription: int = None,
+    skip: int = Query(default=0, ge=0),
+    limit: int = Query(default=1000, ge=1, le=1000),
+    db: Session = Depends(get_db),
+):
+    return crud.get_notes(
+        db,
+        id_evaluation=id_evaluation,
+        id_inscription=id_inscription,
+        skip=skip,
+        limit=limit,
+    )
 
 
 @router.get("/{id_note}", response_model=NoteRead)

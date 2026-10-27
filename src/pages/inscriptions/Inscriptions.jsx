@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { CheckCircle2, Clock3, Plus, Search, Users } from "lucide-react";
+import { ArrowLeftRight, CheckCircle2, Clock3, Plus, Search, Users } from "lucide-react";
 import { useReferenceOptions } from "../../hooks/useReferenceOptions";
 import { getAnnees } from "../../services/anneesApi";
 import { getClasses } from "../../services/classesApi";
 import { getEleves } from "../../services/elevesApi";
-import { createInscription, getInscriptions } from "../../services/inscriptionsApi";
+import { createInscription, getInscriptions, updateInscription } from "../../services/inscriptionsApi";
 import { optionsFrom } from "../pageUtils";
 import "./Inscriptions.css";
 
@@ -91,12 +91,17 @@ export default function Inscriptions() {
   const [formOpen, setFormOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState("");
+  const [transferRow, setTransferRow] = useState(null);
+  const [transferClassId, setTransferClassId] = useState("");
+  const [transferSaving, setTransferSaving] = useState(false);
+  const [transferError, setTransferError] = useState("");
+  const [transferSuccess, setTransferSuccess] = useState("");
 
   const years = references.annees || emptyList;
   const classes = references.classes || emptyList;
   const students = references.eleves || emptyList;
   const yearOptions = useMemo(() => optionsFrom(years, "id_annee", "libelle"), [years]);
-  const classOptions = useMemo(() => optionsFrom(classes, "id_classe", (item) => `${item.nom}${item.niveau ? ` — ${item.niveau}` : ""}`), [classes]);
+  const classOptions = useMemo(() => optionsFrom(classes, "id_classe", "nom"), [classes]);
   const studentOptions = useMemo(() => optionsFrom(students, "id_eleve", (item) => `${item.prenom} ${item.nom} — ${item.matricule}`), [students]);
   const activeYear = years.find((year) => String(year.id_annee) === selectedYearId)
     || years.find((year) => String(year.statut).toLocaleLowerCase() === "active")
@@ -191,6 +196,32 @@ export default function Inscriptions() {
     }
   }
 
+  function openTransfer(row) {
+    setTransferRow(row);
+    setTransferClassId("");
+    setTransferError("");
+    setTransferSuccess("");
+  }
+
+  async function submitTransfer(event) {
+    event.preventDefault();
+    if (!transferRow || !transferClassId || transferSaving) return;
+    setTransferSaving(true);
+    setTransferError("");
+    try {
+      await updateInscription(Number(transferRow.id_inscription), { id_classe: Number(transferClassId) });
+      const targetClass = classes.find((item) => Number(item.id_classe) === Number(transferClassId));
+      setTransferSuccess(`${transferRow.studentName} a été transféré(e) vers ${targetClass?.nom || "la nouvelle classe"}.`);
+      setTransferRow(null);
+      setLoading(true);
+      await loadInscriptions();
+    } catch (requestError) {
+      setTransferError(requestError?.message || "Le changement de classe a échoué.");
+    } finally {
+      setTransferSaving(false);
+    }
+  }
+
   return (
     <main className="inscriptions-page">
       <div className="inscriptions-heading">
@@ -232,6 +263,8 @@ export default function Inscriptions() {
           </button>
         </div>
 
+        {transferSuccess && <div className="success-message" role="status">{transferSuccess}</div>}
+
         {loadError && <div className="crud-alert" role="alert">{loadError}<button className="crud-secondary" type="button" onClick={loadInscriptions}>Réessayer</button></div>}
         {loading ? <div className="crud-state" role="status">Chargement des inscriptions…</div> : !activeYear ? (
           <div className="crud-state">Aucune année scolaire disponible. Créez d’abord une année scolaire.</div>
@@ -240,7 +273,7 @@ export default function Inscriptions() {
         ) : (
           <div className="inscriptions-table-wrap">
             <table className="inscriptions-table">
-              <thead><tr><th>Élève</th><th>Classe</th><th>Type</th><th>Statut</th></tr></thead>
+              <thead><tr><th>Élève</th><th>Classe</th><th>Type</th><th>Statut</th><th>Action</th></tr></thead>
               <tbody>
                 {filteredRows.map((row) => (
                   <tr key={row.id_inscription}>
@@ -248,6 +281,7 @@ export default function Inscriptions() {
                     <td>{row.className}</td>
                     <td><span className={`inscription-type${row.typeLabel === "Redoublante" ? " repeating" : ""}`}>{row.typeLabel}</span></td>
                     <td><span className={`status-badge ${row.status.tone}`}>{row.status.label}</span></td>
+                    <td><button className="inscription-transfer-button" type="button" onClick={() => openTransfer(row)} title={`Changer la classe de ${row.studentName}`} aria-label={`Changer la classe de ${row.studentName}`}><ArrowLeftRight size={16} /><span>Changer de classe</span></button></td>
                   </tr>
                 ))}
               </tbody>
@@ -257,6 +291,7 @@ export default function Inscriptions() {
       </section>
 
       {formOpen && <InscriptionForm fields={fields} form={form} onChange={changeForm} onClose={() => !saving && setFormOpen(false)} onSubmit={submitForm} saving={saving} error={formError} />}
+      {transferRow && <div className="crud-overlay" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && !transferSaving && setTransferRow(null)}><section className="crud-modal inscription-modal" role="dialog" aria-modal="true" aria-labelledby="transfer-modal-title"><div className="crud-modal-head"><div><h2 id="transfer-modal-title">Changer la classe</h2><p>{transferRow.studentName} · Année {activeYear?.libelle || "scolaire"}</p></div><button type="button" aria-label="Fermer" onClick={() => setTransferRow(null)} disabled={transferSaving}>×</button></div><form className="crud-form" onSubmit={submitTransfer}>{transferError && <div className="crud-alert" role="alert">{transferError}</div>}<div className="crud-form-grid"><div className="crud-field full"><label htmlFor="transfer-class-select">Nouvelle classe *</label><select id="transfer-class-select" value={transferClassId} onChange={(event) => setTransferClassId(event.target.value)} required><option value="">Sélectionner une classe</option>{classes.filter((item) => Number(item.id_etablissement) === Number(transferRow.student?.id_etablissement) && Number(item.id_classe) !== Number(transferRow.id_classe)).map((item) => <option key={item.id_classe} value={item.id_classe}>{item.nom}</option>)}</select></div><div className="crud-field full"><small className="transfer-note">Le changement concerne cette année scolaire. Les notes déjà saisies restent liées aux évaluations auxquelles elles appartiennent.</small></div></div><div className="crud-form-actions"><button className="crud-secondary" type="button" onClick={() => setTransferRow(null)} disabled={transferSaving}>Annuler</button><button className="crud-primary" type="submit" disabled={transferSaving || !transferClassId}>{transferSaving ? "Transfert…" : "Confirmer le transfert"}</button></div></form></section></div>}
     </main>
   );
 }

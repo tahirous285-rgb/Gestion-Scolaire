@@ -105,7 +105,7 @@
 .inscriptions-search input::placeholder { color: #a9b2c3; }
 .inscriptions-create { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 40px; white-space: nowrap; }
 .inscriptions-table-wrap { overflow-x: auto; }
-.inscriptions-table { width: 100%; min-width: 580px; border-collapse: collapse; }
+.inscriptions-table { width: 100%; min-width: 760px; border-collapse: collapse; }
 .inscriptions-table th { padding: 12px 17px; border-bottom: 1px solid var(--line); color: #8792a6; background: #fbfcfe; font-size: 9px; font-weight: 800; letter-spacing: .08em; text-align: left; text-transform: uppercase; }
 .inscriptions-table td { padding: 14px 17px; border-bottom: 1px solid #f0f2f7; color: var(--muted-dark); font-size: 12px; }
 .inscriptions-table tbody tr:last-child td { border-bottom: 0; }
@@ -117,6 +117,9 @@
 .inscription-type.repeating { color: #a66617; }
 .inscriptions-empty { padding: 54px 20px; color: var(--muted); font-size: 13px; text-align: center; }
 .inscription-modal { width: min(680px, 100%); }
+.inscription-transfer-button { display: inline-flex; align-items: center; gap: 7px; min-height: 34px; padding: 6px 9px; border: 1px solid var(--line); border-radius: 7px; color: var(--primary); background: #fff; font: inherit; font-size: 11px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+.inscription-transfer-button:hover { border-color: var(--primary); background: var(--primary-soft); }
+.transfer-note { display: block; padding: 11px 12px; border-radius: 7px; color: var(--muted-dark); background: #f5f7fb; font-size: 11px; line-height: 1.5; }
 
 @media (max-width: 700px) {
   .inscriptions-heading { align-items: stretch; flex-direction: column; }

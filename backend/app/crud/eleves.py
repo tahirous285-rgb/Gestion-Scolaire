@@ -1,6 +1,8 @@
 from uuid import uuid4
+from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from app.models.eleves import Eleve, Parent, EleveParent, Inscription
+from app.models.scolarite import Classe
 from app.schemas.eleves import (
     EleveCreate, EleveUpdate,
     ParentCreate, ParentUpdate,
@@ -124,7 +126,19 @@ def update_inscription(db: Session, id_inscription: int, data: InscriptionUpdate
     db_obj = get_inscription(db, id_inscription)
     if not db_obj:
         return None
-    for key, value in data.model_dump(exclude_unset=True).items():
+    updates = data.model_dump(exclude_unset=True)
+    if updates.get("id_classe") is not None:
+        target_class = db.query(Classe).filter(Classe.id_classe == updates["id_classe"]).first()
+        if not target_class:
+            raise HTTPException(status_code=404, detail="Classe de destination introuvable")
+        student = get_eleve(db, db_obj.id_eleve)
+        if not student or target_class.id_etablissement != student.id_etablissement:
+            raise HTTPException(
+                status_code=400,
+                detail="L’élève ne peut être transféré que vers une classe de son établissement",
+            )
+
+    for key, value in updates.items():
         setattr(db_obj, key, value)
     db.commit()
     db.refresh(db_obj)
