@@ -81,6 +81,12 @@ class ObservationEnseignantCreate(ObservationEnseignantBase):
     pass
 
 
+class ObservationEnseignantUpdate(BaseModel):
+    date_observation: Optional[date] = None
+    contenu: Optional[str] = None
+    confidentialite: Optional[str] = None
+
+
 class ObservationEnseignantRead(ObservationEnseignantBase):
     id_observation: int
     date_creation: datetime

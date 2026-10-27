@@ -4,7 +4,7 @@ from app.models.cahier_maitres import PresenceEnseignant, CoursEffectue, Observa
 from app.schemas.cahier_maitres import (
     PresenceEnseignantCreate, PresenceEnseignantUpdate,
     CoursEffectueCreate,
-    ObservationEnseignantCreate
+    ObservationEnseignantCreate, ObservationEnseignantUpdate
 )
 
 
@@ -69,7 +69,11 @@ def get_observations(db: Session, id_enseignant: int = None):
     query = db.query(ObservationEnseignant)
     if id_enseignant:
         query = query.filter(ObservationEnseignant.id_enseignant == id_enseignant)
-    return query.all()
+    return query.order_by(ObservationEnseignant.date_creation.desc()).all()
+
+
+def get_observation(db: Session, id_observation: int):
+    return db.query(ObservationEnseignant).filter(ObservationEnseignant.id_observation == id_observation).first()
 
 
 def create_observation(db: Session, data: ObservationEnseignantCreate):
@@ -77,4 +81,24 @@ def create_observation(db: Session, data: ObservationEnseignantCreate):
     db.add(db_obj)
     db.commit()
     db.refresh(db_obj)
+    return db_obj
+
+
+def update_observation(db: Session, id_observation: int, data: ObservationEnseignantUpdate):
+    db_obj = get_observation(db, id_observation)
+    if not db_obj:
+        return None
+    for key, value in data.model_dump(exclude_unset=True).items():
+        setattr(db_obj, key, value)
+    db.commit()
+    db.refresh(db_obj)
+    return db_obj
+
+
+def delete_observation(db: Session, id_observation: int):
+    db_obj = get_observation(db, id_observation)
+    if not db_obj:
+        return None
+    db.delete(db_obj)
+    db.commit()
     return db_obj

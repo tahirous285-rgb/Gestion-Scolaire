@@ -1,6 +1,6 @@
 # Matrice backend utilisée par le frontend
 
-Source consultée : `backend/` (dépôt `Hamdate/Projet-Ecole`, `main` @ `fb43063`) — `app/api/v1/api.py`, les routeurs `app/api/v1/endpoints/`, les schemas et modèles. Les suffixes `/` ci-dessous sont ceux déclarés par FastAPI.
+Source consultée : `backend/` (dépôt `Hamdate/Projet-Ecole`, `main` @ `2762593`) — `app/api/v1/api.py`, les routeurs `app/api/v1/endpoints/`, les schemas et modèles. Les suffixes `/` ci-dessous sont ceux déclarés par FastAPI.
 
 Depuis cette version, toutes les routes ci-dessous exigent `Authorization: Bearer <token>` (seul `POST /auth/login` est public) : la dépendance `get_current_user` est appliquée globalement dans `api_router`.
 
@@ -9,12 +9,13 @@ Depuis cette version, toutes les routes ci-dessous exigent `Authorization: Beare
 | Module | Routes utilisées | Schémas / champs principaux | Capacités frontend |
 | --- | --- | --- | --- |
 | Établissements | `GET/POST /etablissements/`, `GET/PUT/DELETE /etablissements/{id}` | `nom`, `code`, `adresse`, `telephone`, `email`, `site_web`, `logo`, `devise`, `langue`, `fuseau_horaire`, `actif` | CRUD |
-| Rôles | `GET/POST /roles/` | `nom`, `code`, `description` | Liste + création |
+| Rôles | `GET/POST /roles/`, `GET/PUT/DELETE /roles/{id}` | `nom`, `code`, `description` | Liste + création dans l’interface |
+| Permissions | `GET/POST /permissions/`, `GET/PUT/DELETE /permissions/{id}`, `GET /permissions/role/{id_role}`, `POST /permissions/assign`, `DELETE /permissions/assign/{id_role}/{id_permission}` | `nom`, `code`, `description`, association `id_role`–`id_permission` | API disponible, pas encore intégrée à l’interface |
 | Utilisateurs | `GET/POST /utilisateurs/`, `GET/PUT/DELETE /utilisateurs/{id}` | création : `id_etablissement`, `id_role`, `nom`, `prenom`, `email`, `telephone`, `login`, `mot_de_passe`, `statut`; mise à jour : `nom`, `prenom`, `email`, `telephone`, `statut`, `id_role` | CRUD adapté aux deux schemas |
 | Paramètres | `GET /parametres/?id_etablissement=`, `POST /parametres/`, `PUT /parametres/{id}` | `id_etablissement`, `cle`, `valeur`, `description` | Liste + création + modification |
 | Journal | `GET /journal/?id_etablissement=&limit=`, `POST /journal/` | `id_etablissement`, `id_utilisateur`, `action`, `module`, `table_cible`, `id_cible`, valeurs ancienne/nouvelle, `adresse_ip` | Liste + entrée conforme au schema |
 
-Le modèle `Permission` existe, mais aucun routeur permissions n’est inclus dans `api_router`. Aucune route `/permissions` n’est fabriquée.
+L’API prend désormais en charge les permissions et leur association aux rôles. L’interface frontend ne propose pas encore leur gestion, ni le détail, la modification ou la suppression des rôles.
 
 ## Scolarité
 
@@ -45,7 +46,7 @@ Le modèle `Permission` existe, mais aucun routeur permissions n’est inclus da
 
 - Présences enseignants : `GET/POST /presences-enseignants/`, `PUT /presences-enseignants/{id}`. Les statuts proposés correspondent au commentaire du modèle : `PRESENT`, `ABSENT`, `RETARD`, `PERMISSION`, `MISSION`, `CONGE`, `AUTRE`.
 - Cours effectués : `GET/POST /cours-effectues/`.
-- Observations enseignants : `GET /observations-enseignants/?id_enseignant=`, `POST /observations-enseignants/`. Champs : `id_enseignant`, `id_auteur` (non modifiable, rempli avec l’utilisateur connecté), `date_observation` (optionnelle), `contenu` (obligatoire), `confidentialite` (texte libre, défaut `interne`). Aucun `PUT`/`DELETE` n’est déclaré : la page reste en liste + création.
+- Observations enseignants : `GET /observations-enseignants/?id_enseignant=`, `GET /observations-enseignants/{id_observation}`, `POST /observations-enseignants/`, `PUT/DELETE /observations-enseignants/{id_observation}`. Champs : `id_enseignant`, `id_auteur` (non modifiable, rempli avec l’utilisateur connecté), `date_observation` (optionnelle), `contenu` (obligatoire), `confidentialite` (texte libre, défaut `interne`). L’API permet la lecture, la création, la modification et la suppression ; l’interface reste en liste + création.
 
 ## Honoraires, finance et documents
 

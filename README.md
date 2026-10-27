@@ -29,19 +29,19 @@ VITE_BACKEND_URL=http://adresse-du-backend:8000 npm run dev
 
 La page `/login` envoie `id_etablissement`, `login` et `mot_de_passe` à `POST /api/v1/auth/login`. Le JWT, le rôle, l’utilisateur et l’identifiant de l’établissement sont conservés dans la session locale. Chaque requête de service ajoute automatiquement `Authorization: Bearer <token>`.
 
-## Fonctionnalités non exposées par le backend
+## Fonctionnalités non encore exposées dans l’interface frontend
 
-Le frontend n’invente pas de route pour les fonctionnalités absentes de l’API actuelle. L’interface les signale explicitement avec `BACKEND NON DISPONIBLE` :
+Le frontend n’invente pas de route pour les fonctionnalités absentes de l’API actuelle et signale explicitement les opérations non disponibles. Certaines fonctionnalités sont désormais présentes dans l’API, mais ne sont pas encore intégrées à l’interface :
 
-- permissions et association rôle–permission ;
+- gestion et association des permissions aux rôles ;
 - association classe–matière (`ClasseMatiere`) ;
 - liste globale des reçus (la recherche par paiement reste disponible).
 
 ## Backend
 
-`backend/` contient l’API FastAPI réellement utilisée par le frontend : dépôt [`Hamdate/Projet-Ecole`](https://github.com/Hamdate/Projet-Ecole), branche `main`, commit `fb43063` (« Ajout du module Observations enseignants », 28/09/2026). Les fichiers sont versionnés ici directement afin que le checkout reste complet — auparavant `backend/` n’était qu’un gitlink non initialisé, donc un dossier vide. Aucun fichier backend n’est modifié par le frontend.
+`backend/` contient l’API FastAPI réellement utilisée par le frontend : dépôt [`Hamdate/Projet-Ecole`](https://github.com/Hamdate/Projet-Ecole), branche `main`, commit [`2762593`](https://github.com/Hamdate/Projet-Ecole/commit/276259323362875767aa632bc8e3cf7b948962b5) (« Observations enseignants : lecture, modification et suppression », 08/10/2026). Cette version ajoute les routes de lecture, modification et suppression des observations enseignants, ainsi que la gestion des permissions et les opérations complètes sur les rôles.
 
-Depuis cette version, le backend exige un JWT sur toutes les routes sauf `POST /auth/login` (`HTTPBearer` + `get_current_user`), ce que `apiClient.js` fait déjà, et renvoie `400` sur un doublon enseignant–matière ou enseignant–classe.
+Le backend exige un JWT sur toutes les routes sauf `POST /auth/login` (`HTTPBearer` + `get_current_user`), ce que `apiClient.js` fait déjà, et renvoie `400` sur un doublon enseignant–matière ou enseignant–classe.
 
 Démarrer l’API en local (Python 3.11+, dépendances épinglées dans `backend/requirements.txt`) :
 
